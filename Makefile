@@ -41,23 +41,29 @@ all: stop install start
 
 stop:
 	@echo "-    Stopping PRU $(PRUN)"
-	@echo stop | sudo tee $(PRU_DIR)/state || echo Cannot stop $(PRUN)
+	@sudo sh -c "echo stop > $(PRU_DIR)/state" || echo Cannot stop $(PRUN)
 
 start:
 	@echo "-    Starting PRU $(PRUN)"
-	@echo start | sudo tee $(PRU_DIR)/state
+	@sudo sh -c "echo start > $(PRU_DIR)/state" || ((echo Cannot start $(PRUN); false))
 
-install: $(GEN_DIR)/$(TARGET).out
-	@echo '-    configuring usr3 led'
-	@echo none > /sys/class/leds/beaglebone\:green\:usr3/trigger
-	@echo '-	copying firmware file $(GEN_DIR)/$(TARGET).out to /lib/firmware/am335x-pru$(PRUN)-fw'
+install: $(GEN_DIR)/$(TARGET).out configPins
+	@echo '-    copying firmware file $(GEN_DIR)/$(TARGET).out to /lib/firmware/am335x-pru$(PRUN)-fw'
 	@sudo cp $(GEN_DIR)/$(TARGET).out /lib/firmware/am335x-pru$(PRUN)-fw
+	
+configPins:
+	@echo "-    Configuring Pins"
+	@config-pin P9_27 pruout
 
-$(GEN_DIR)/$(TARGET).out: $(GEN_DIR)/$(TARGET).obj
+$(GEN_DIR)/$(TARGET).out: $(GEN_DIR)/$(TARGET).obj $(GEN_DIR)/main.obj
 	@echo 'LD	$^' 
 	@lnkpru -i$(PRU_CGT)/lib -i$(PRU_CGT)/include $(LFLAGS) -o $@ $^ $(LINKER_COMMAND_FILE) --library=libc.a $(LIBS) $^
 
-$(GEN_DIR)/$(TARGET).obj: $(TARGET).c
+$(GEN_DIR)/main.obj: main.c
+	@echo 'CC	$<'
+	@clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(CFLAGS) -fe $@ $<
+
+$(GEN_DIR)/$(TARGET).obj: $(TARGET).asm
 	@mkdir -p $(GEN_DIR)
 	@echo 'CC	$<'
 	@clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(CFLAGS) -D=PRUN=$(PRUN) -fe $@ $<
