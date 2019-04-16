@@ -4,7 +4,10 @@
 # 
 
 # TARGET must be defined as the file to be compiled without the .c.
+TARGET=hello
+
 # PRUN must be defined as the PRU number (0 or 1) to compile for.
+PRUN=0
 
 # PRU_CGT environment variable points to the TI PRU compiler directory.
 # PRU_SUPPORT points to pru-software-support-package.
@@ -45,6 +48,8 @@ start:
 	@echo start | sudo tee $(PRU_DIR)/state
 
 install: $(GEN_DIR)/$(TARGET).out
+	@echo '-    configuring usr3 led'
+	@echo none > /sys/class/leds/beaglebone\:green\:usr3/trigger
 	@echo '-	copying firmware file $(GEN_DIR)/$(TARGET).out to /lib/firmware/am335x-pru$(PRUN)-fw'
 	@sudo cp $(GEN_DIR)/$(TARGET).out /lib/firmware/am335x-pru$(PRUN)-fw
 

@@ -16,17 +16,14 @@ volatile register unsigned int __R30;
 volatile register unsigned int __R31;
 
 void main(void) {
-	int i;
-
 	/* Clear SYSCFG[STANDBY_INIT] to enable OCP master port */
 	CT_CFG.SYSCFG_bit.STANDBY_INIT = 0;
 
-	for(i=0; i<5; i++) {
+	while(1) {
 		*GPIO1_SET = USR3;      // The the USR3 LED on
 		__delay_cycles(500000000/5);    // Wait 1/2 second
 
 		*GPIO1_CLEAR = USR3;
 		 __delay_cycles(500000000/5); 
 	}
-	__halt();
 }
