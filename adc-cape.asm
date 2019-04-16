@@ -9,15 +9,19 @@
   .asg "r31.t1", DRDY ; Pin 29 ; Make sure to change the WBC instructions
   .asg "r30.t0", SCLK ; Pin 31  
   .asg "r31.t2", MISO ; Pin 30
+  .asg "r31.t5", SYNC ; Pin 27
+  .asg "r30.t7", DEBUG ; Pin 25
   
 ; Variables
-  .asg "r12", CHANNELS_REMAINING
   .asg "r10", INPUT_BUFFER
   .asg "r15", OUTPUT_BUFFER_START
   .asg "r11", OUTPUT_BUFFER_INDEX
+
+; Registers r20-r29 are for temporary use
   
   .asg 24, BITS_PER_CHANNEL
   .asg 4, CHANNELS
+  .asg 4, SAMPLE_SIZE_BYTES
   
   .asg 0x00000000, BUFF_LOCATION ; Hooked up to main memory
   
@@ -26,6 +30,9 @@
 
 ; Using register 0 for all temporary storage (reused multiple times)
 START:
+   ; Init pins
+   SET r30, r30, 5 ; Sync is normally pulled high
+   
    ; Read number of samples to read and inter-sample delay
    LDI32  r0, 0x00000000        ; load the memory location, number of samples
    LBBO   &r1, r0, 0, 4         ; load the value into memory - keep r1
@@ -34,24 +41,37 @@ START:
    LBBO   &r2, r0, 0, 4         ; the sample delay is stored in r2
    LDI r10, 0; Zero out the input buffer register
    LDI32 OUTPUT_BUFFER_START, BUFF_LOCATION
-   QBA MEMTEST
 
+   ; Sync pulse
+   CLR r30, r30, 5
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   SET r30, r30, 5
+   
 MAINLOOP:
    LDI32 OUTPUT_BUFFER_INDEX, 0
    WBC r31, 1 ; Wait for DRDY
    
-   LOOP READ_END, CHANNELS
+READ_CHANNEL_START:
    LOOP READ_CHANNEL_END, BITS_PER_CHANNEL
-   AND r22, r31, 1 ; Read in/mask our bit to the right
-   ADD INPUT_BUFFER, INPUT_BUFFER, 1 ; OR INPUT_BUFFER, INPUT_BUFFER, r22 ; Copy into buffer
-   SET r30, r30, 0 ; Clock high
-   NOP;LSL INPUT_BUFFER, INPUT_BUFFER, 1 ; Shift
-   NOP
-   NOP
    CLR r30, r30, 0 ; Clock low
+   NOP; AND r22, r31, 1 ; Read in/mask our bit to the right
+   NOP; OR INPUT_BUFFER, INPUT_BUFFER, r22 ; Copy into buffer
+   ;SET r30, r30, 0 ; Clock high
+   NOP ; LSL INPUT_BUFFER, INPUT_BUFFER, 1 ; Shift
+   NOP
+   XOR r30, r30, 1<<7 ; Debug pulse
+   ; Must read one bit every 7 cycles
 READ_CHANNEL_END:
-   SBBO &INPUT_BUFFER, OUTPUT_BUFFER_START, OUTPUT_BUFFER_INDEX, 4
-   ADD OUTPUT_BUFFER_INDEX, OUTPUT_BUFFER_INDEX, 4
+   SBBO &INPUT_BUFFER, OUTPUT_BUFFER_START, OUTPUT_BUFFER_INDEX, SAMPLE_SIZE_BYTES
+   ADD OUTPUT_BUFFER_INDEX, OUTPUT_BUFFER_INDEX, SAMPLE_SIZE_BYTES
+   QBNE READ_CHANNEL_START, OUTPUT_BUFFER_INDEX, SAMPLE_SIZE_BYTES * CHANNELS
 
 READ_END:
    QBA MAINLOOP
@@ -66,7 +86,8 @@ MEMTEST:
    LDI32 OUTPUT_BUFFER_INDEX, 0
    LOOP MEMTEST_END, 8
    ADD INPUT_BUFFER, INPUT_BUFFER, 1
-   SBBO &INPUT_BUFFER, OUTPUT_BUFFER_START, OUTPUT_BUFFER_INDEX, 4
+   SET r30, r30, 7
+   CLR r30, r30, 7
    ADD OUTPUT_BUFFER_INDEX, OUTPUT_BUFFER_INDEX, 4
 MEMTEST_END:
-   HALT
+   QBA MEMTEST

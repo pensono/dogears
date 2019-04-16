@@ -52,14 +52,16 @@ start:
 	@sudo sh -c "echo start > $(PRU_DIR)/state" || ((echo Cannot start $(PRUN); false))
 
 install: $(PRU0_GEN_DIR)/$(TARGET).out configPins
-	@echo '-    copying firmware file $(PRU0_GEN_DIR)/$(TARGET).out to /lib/firmware/am335x-pru$(PRUN)-fw'
+	@echo '-    Copying firmware file $(PRU0_GEN_DIR)/$(TARGET).out to /lib/firmware/am335x-pru$(PRUN)-fw'
 	@sudo cp $(PRU0_GEN_DIR)/$(TARGET).out /lib/firmware/am335x-pru$(PRUN)-fw
 	
 configPins:
-	@echo "-    Configuring Pins"
+	@echo "-    Configuring pins"
 	@config-pin P9_29 pruin  # DRDY
 	@config-pin P9_31 pruout # SCLK
 	@config-pin P9_30 pruin  # MISO
+	@config-pin P9_27 pruout # SYNC
+	@config-pin P9_25 pruout # DEBUG
 
 $(PRU0_GEN_DIR)/$(TARGET).out: $(PRU0_GEN_DIR)/$(TARGET).obj $(PRU0_GEN_DIR)/main.obj
 	@echo 'LD	$^' 
