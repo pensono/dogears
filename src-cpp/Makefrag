@@ -6,7 +6,11 @@ OBJS=$(SRCS:src-cpp/%.cpp=$(GEN_DIR)/cpp/%.obj)
 
 $(GEN_DIR)/libadc-cape.so: $(OBJS)
 	@echo 'LD	$@ $<'
-	@$(CC) -shared $^ -o $@
+	@$(CC) $(LFLAGS) -shared $^ -o $@
+	
+memory_test: $(OBJS)
+	@echo 'LD	$@ $<'
+	@$(CC) $(LFLAGS) $^ -o $@
 
 $(GEN_DIR)/cpp/%.obj: src-cpp/%.cpp
 	@mkdir -p $(GEN_DIR)/cpp

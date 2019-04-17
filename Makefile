@@ -13,7 +13,7 @@ include examples/Makefrag
 
 examples: libadc-cape.so $(EXAMPLES)
 
-pru-run: pru-stop pru-install pru-configPins pru-start
+pru-run: $(GEN_DIR)/pru/adc-cape.out pru-stop pru-install pru-configPins pru-start
 
 GEN_DIR:
 	mkdir $@

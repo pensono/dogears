@@ -7,7 +7,7 @@ namespace adc {
 // In samples, per channel
 static constexpr int pru_buffer_capacity = 1024;
 static constexpr int channels = 4;
-static constexpr int sample_rate = 144000; // I think this is the right sample rate, just a guess for now.
+static constexpr int sample_rate = 105469;
   
 /**
    Only one data aquisition method should be used at a time.
