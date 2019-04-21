@@ -1,0 +1,14 @@
+
+CC:=g++
+
+EXAMPLES:=moving_average
+
+.SECONDEXPANSION:
+$(EXAMPLES): $(GEN_DIR)/examples/$$@.obj $(GEN_DIR)/libadc-cape.so
+	@echo 'LD	$@'
+	@$(CC) $(LFLAGS) -o $@ $^  -Lbin -ladc-cape
+
+$(GEN_DIR)/examples/%.obj: examples/%.cpp
+	@mkdir -p $(GEN_DIR)/examples
+	@echo 'G++	$<'
+	@$(CC) $(CFLAGS) -o $@ $^

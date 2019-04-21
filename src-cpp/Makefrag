@@ -1,11 +1,14 @@
 
 CC:=g++
 
-adccape: $(GEN_DIR)/cpp/adccape.obj
-	@echo 'LD	$<'
-	@$(CC) $(LFLAGS) -o $@ $^
+SRCS=$(wildcard src-cpp/*.cpp)
+OBJS=$(SRCS:src-cpp/%.cpp=$(GEN_DIR)/cpp/%.obj)
 
-$(GEN_DIR)/cpp/%.obj: src-cpp/%.c
+$(GEN_DIR)/libadc-cape.so: $(OBJS)
+	@echo 'LD	$@'
+	@$(CC) $(LFLAGS) -shared $^ -o $@
+
+$(GEN_DIR)/cpp/%.obj: src-cpp/%.cpp
 	@mkdir -p $(GEN_DIR)/cpp
 	@echo 'G++	$<'
-	@$(CC) $(CFLAGS) -o $@ $^
+	@$(CC) $(CFLAGS)  $^ -o $@

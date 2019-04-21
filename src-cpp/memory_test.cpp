@@ -17,9 +17,9 @@
 
 
 int main(int argc, char **argv) {
-    int fd, i;
+    int fd;
     void *map_base;
-    unsigned long read_result, writeval;
+    unsigned long read_result;
     unsigned int numberOutputSamples = 16;
     off_t target = 0x4a300000;
 
@@ -36,9 +36,9 @@ int main(int argc, char **argv) {
     }
     fflush(stdout);
     
-   for(i=0; i<numberOutputSamples; i++){
+   for(unsigned int i=0; i < numberOutputSamples; i++){
        read_result = *(((unsigned int *) map_base) + i);
-       printf("Value at address 0x%X is: 0x%X\n", target + i * sizeof(unsigned int), read_result);
+       printf("Value at address 0x%lX is: 0x%lX\n", target + i * sizeof(unsigned int), read_result);
    }
    fflush(stdout);
 

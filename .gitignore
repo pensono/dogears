@@ -1,2 +1,6 @@
-adccape
-obj/
+# executables
+memory_test
+moving_average
+
+# output directory
+bin/

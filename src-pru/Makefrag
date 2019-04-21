@@ -32,8 +32,6 @@ endif
 PRU_DIR=$(wildcard /sys/devices/platform/ocp/4a32600*.pruss-soc-bus/4a300000.pruss/$(PRU_ADDR).*/remoteproc/remoteproc*)
 
 
-pru-run: pru-stop pru-install pru-start
-
 pru-stop:
 	@echo "-    Stopping PRU $(PRUN)"
 	@sudo sh -c "echo stop > $(PRU_DIR)/state" || echo Cannot stop $(PRUN)
@@ -43,7 +41,7 @@ pru-start:
 	@sudo sh -c "echo start > $(PRU_DIR)/state" || ((echo Cannot start $(PRUN); false))
 
 pru-install: $(GEN_DIR)/pru/adc-cape.out pru-configPins
-	@echo '-    Copying firmware file $(GEN_DIR)/pru/adc-cape.out to /lib/firmware/am335x-pru$(PRUN)-fw'
+	@echo '-    Copying firmware file $(GEN_DIR)/$(TARGET).out to /lib/firmware/am335x-pru$(PRUN)-fw'
 	@sudo cp $(GEN_DIR)/pru/adc-cape.out /lib/firmware/am335x-pru$(PRUN)-fw
 	
 pru-configPins:
@@ -67,3 +65,5 @@ $(GEN_DIR)/pru/adc-cape.obj: src-pru/adc-cape.asm
 	@mkdir -p $(GEN_DIR)/pru
 	@echo 'CC	$<'
 	@clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(PRU_CFLAGS) -D=PRUN=$(PRUN) -fe $@ $<
+
+.PHONY: pru-stop pru-start pru-install pru-configPins
