@@ -8,7 +8,7 @@ The source is divided into three subdirectories:
 - `src-pru`: Files required for the program running on the PRU which interfaces with the adc over GPIO pins.
 - `src-cpp`: Source files for the C++ interface. This code communicates with the code on the PRU
 - `src-python`: Source files for the python interface
-- `examples`: Example code is placed here. Adding or modifying an example is the preferred way to test out new functionality.
+- `examples`: Example code is placed here. Adding a new example is the preferred way to test
 - `include`: `.h` files which must be included by users of the cape
 - `lib`: Dynamically linked binaries which must be included by users of the cape
 

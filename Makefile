@@ -11,7 +11,7 @@ include src-pru/Makefrag
 include examples/Makefrag
 
 
-examples: $(GEN_DIR)/libadc-cape.so moving_average
+examples: $(GEN_DIR)/libadc-cape.so $(EXAMPLES)
 
 pru-run: pru-stop pru-install pru-configPins pru-start
 
@@ -19,7 +19,7 @@ GEN_DIR:
 	mkdir $@
 	
 clean:
-	@echo "CLEAN	$(GEN_DIR)/ $(EXAMPLES)"
-	@rm -rf $(GEN_DIR) $(EXAMPLES) memory_test
+	@echo "CLEAN	$(GEN_DIR)/ "
+	@rm -rf $(GEN_DIR)
 	
 .PHONY: clean pru-run

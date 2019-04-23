@@ -1,5 +1,6 @@
 #include <iostream>
 #include <numeric>
+#include <vector>
 #include "adc_cape/cape.h"
 #include "adc_cape/buffer.h"
 
@@ -27,15 +28,15 @@ void averageAndPrint(adc::Buffer<float> buffer) {
 
 // Same thing as averageAndPrint, but using fewer modern C++ features
 void averageAndPrintIndexes(adc::Buffer<float> buffer) {
-    for (unsigned int channelNum = 0; channelNum < adc::channels; channelNum++) {
+    for (unsigned int channelNum = 0; channelNum < buffer.channels(); channelNum++) {
         float sum = 0.0f;
-        auto channelData = buffer.channelData(channelNum);
+        std::vector<float> channelData = buffer.channelData(channelNum);
         
         for (unsigned int i = 0; i < channelData.size(); channelNum++) {
             sum += channelData[i];
         }
         
-        std::cout << sum / channelData.size() << " ";
+        std::cout << sum / buffer.samples() << " ";
     }
     std::cout << std::endl;
 }
