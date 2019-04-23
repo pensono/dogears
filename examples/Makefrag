@@ -1,7 +1,7 @@
 
 CC:=g++
 
-EXAMPLES:=moving_average capture_wav
+EXAMPLES:=average capture_wav
 
 .SECONDEXPANSION:
 $(EXAMPLES): $(GEN_DIR)/examples/$$@.obj $(GEN_DIR)/libadc-cape.so
