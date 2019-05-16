@@ -41,7 +41,7 @@ pru-start:
 	@sudo sh -c "echo start > $(PRU_DIR)/state" || ((echo Cannot start $(PRUN); false))
 
 pru-install: $(GEN_DIR)/pru/adc-cape.out pru-configPins
-	@echo '-    Copying firmware file $(GEN_DIR)/$(TARGET).out to /lib/firmware/am335x-pru$(PRUN)-fw'
+	@echo '-    Copying firmware file $(GEN_DIR)/pru/adc-cape.out to /lib/firmware/am335x-pru$(PRUN)-fw'
 	@sudo cp $(GEN_DIR)/pru/adc-cape.out /lib/firmware/am335x-pru$(PRUN)-fw
 	
 pru-configPins:

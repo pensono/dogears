@@ -4,11 +4,11 @@ CC:=g++
 EXAMPLES:=average capture_wav
 
 .SECONDEXPANSION:
-$(EXAMPLES): $(GEN_DIR)/examples/$$@.obj $(GEN_DIR)/libadc-cape.so
+$(EXAMPLES): $(GEN_DIR)/examples/$$@.o $(GEN_DIR)/libadc-cape.a
 	@echo 'LD	$@ $^'
 	@$(CC) $(LFLAGS) -o $@ $^  -Lbin -ladc-cape
 
-$(GEN_DIR)/examples/%.obj: examples/%.cpp
+$(GEN_DIR)/examples/%.o: examples/%.cpp
 	@mkdir -p $(GEN_DIR)/examples
 	@echo 'G++	$<'
 	@$(CC) $(CFLAGS) -o $@ $^

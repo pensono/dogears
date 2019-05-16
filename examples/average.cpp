@@ -10,6 +10,7 @@ void averageAndPrintIndexes(adc::Buffer<float> buffer);
 int main(int argc, char* argv[]) {
     adc::Cape cape;
     
+    std::cout << "Beginning stream..." << std::endl;
     cape.beginStream<float>(averageAndPrint);
     
     // Streaming happens s

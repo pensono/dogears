@@ -7,6 +7,7 @@ namespace adc {
 // In samples, per channel
 static constexpr int pru_buffer_capacity = 1024;
 static constexpr int channels = 4;
+static constexpr int buffers = 2; // double buffered
 static constexpr int sample_rate = 105469;
   
 /**
@@ -41,6 +42,11 @@ class Cape {
     */
     template<typename T>
     std::array<T, channels> sampleAll();
+    
+  private: 
+    int memory_fd;
+    volatile void* buffer_base;
+    volatile void* buffer_number_base;
 };
 
 }
