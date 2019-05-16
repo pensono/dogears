@@ -31,7 +31,7 @@
   .asg 24, BITS_PER_CHANNEL
   .asg 4, CHANNELS
   .asg 4, SAMPLE_SIZE_BYTES
-  .asg 4096, BUFFER_SIZE_BYTES
+  .asg 2048, BUFFER_SIZE_BYTES
   
   .asg 0x00000000, BUFF_LOCATION ; Hooked up to main memory
   .asg 0x00010000, BUFF_NUMBER_LOCATION ; Hooked up to main memory
@@ -48,6 +48,7 @@ START:
    SET r30, r30, 5 ; Sync is normally pulled high
    
    LDI32 OUTPUT_BUFFER_START, BUFF_LOCATION
+   LDI32 OUTPUT_BUFFER_POS, 0
    LDI32 BUFFER_SIZE_BYTES_REG, BUFFER_SIZE_BYTES
    LDI32 BUFFER_SIZE_BYTES_2_REG, BUFFER_SIZE_BYTES * 2
    LDI32 BUFFER_NUMBER_ADDR, BUFF_NUMBER_LOCATION
@@ -71,7 +72,6 @@ START:
 MAINLOOP:
    LDI32 CHANNELS_LEFT, 4
    WBC r31, 1 ; Wait for DRDY
-   XOR r30, r30, 1<<7 ; Debug pulse
    
 READ_CHANNEL_START:
    LOOP READ_CHANNEL_END, BITS_PER_CHANNEL
@@ -84,7 +84,7 @@ READ_CHANNEL_START:
    CLR r30, r30, 0 ; Clock low
    ; Must read one bit every 7 cycles
 READ_CHANNEL_END:
-   ;SBBO &INPUT_BUFFER, OUTPUT_BUFFER_START, OUTPUT_BUFFER_POS, SAMPLE_SIZE_BYTES
+   SBBO &OUTPUT_BUFFER_POS, OUTPUT_BUFFER_START, OUTPUT_BUFFER_POS, SAMPLE_SIZE_BYTES
    ADD OUTPUT_BUFFER_POS, OUTPUT_BUFFER_POS, SAMPLE_SIZE_BYTES
    LDI32 INPUT_BUFFER, 0 ; Clear the input buffer. Not necessary once everything is 24 bits
    
@@ -92,11 +92,10 @@ READ_CHANNEL_END:
    QBNE READ_CHANNEL_START, CHANNELS_LEFT, 0
 
 READ_END:
-   XOR r30, r30, 1<<7 ; Debug pulse
    
    ; There's alot of delay between samples (~6us), so this sassembly code won't be written efficiently
-   
-   ; Did we fill the buffer?
+
+   ; Did we fill either buffer?
    QBEQ PUBLISH_BUF0, OUTPUT_BUFFER_POS, BUFFER_SIZE_BYTES_REG
    QBEQ PUBLISH_BUF1, OUTPUT_BUFFER_POS, BUFFER_SIZE_BYTES_2_REG
    QBA MAINLOOP
@@ -115,3 +114,7 @@ PUBLISH_BUF1:
    LDI32 OUTPUT_BUFFER_POS, 0
    QBA MAINLOOP
 
+
+
+
+; XOR r30, r30, 1<<7 ; Debug pulse

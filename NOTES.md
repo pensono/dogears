@@ -46,8 +46,9 @@ I found the [Cloud9](http://beaglebone.local:3000/ide.html) editor to be somewha
 and there's a bug where files in the editor may not be in sync with the files on disk. In addition, being web
 based, the performance of the editor itself is not great. 
 
-I was able to set up remote editing using JetBrains' CLion. It required an FTP server to be installed on
-the beaglebone: [Setting up FTP](https://www.digitalocean.com/community/tutorials/how-to-set-up-vsftpd-for-a-user-s-directory-on-debian-9)
+I was able to set up remote editing using JetBrains' CLion. The only caveat is that you must manually save files
+(by pressing Shift-Alt-Q by default). It required an FTP server to be installed on the beaglebone: 
+[Setting up FTP](https://www.digitalocean.com/community/tutorials/how-to-set-up-vsftpd-for-a-user-s-directory-on-debian-9)
 ```
 sudo apt-get install vsftpd
 ```

@@ -35,14 +35,21 @@ Cape::~Cape() {
 
 template<>
 void Cape::beginStream<float>(std::function<void(adc::Buffer<float>)> callback) {
-    uint32_t last_buffer = *((uint32_t*)buffer_number_base);
-    
-    std::cout << "Waiting... " << last_buffer << std::endl;
+    volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
+    uint32_t last_buffer = *buffer_number_pru;
+
     while (true) {
-        if (last_buffer != *((uint32_t*)buffer_number_base)) {
-            last_buffer = *((uint32_t*)buffer_number_base);
-            // perfrom the read
-            std::cout << "New buffer! " << last_buffer << std::endl;
+        uint32_t buffer_number = *buffer_number_pru;
+        if (last_buffer != buffer_number) {
+#ifdef DEBUG
+            if (buffer_number != last_buffer + 1) {
+                std::cout << "Buffer dropped. Amt: " << buffer_number - last_buffer - 1 << std::endl;
+            }
+//            std::cout << "New buffer! " << last_buffer << std::endl;
+#endif
+            last_buffer = buffer_number;
+
+            // perform the read
         }
     }
 }

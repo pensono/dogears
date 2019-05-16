@@ -1,5 +1,5 @@
 
-CFLAGS:=-c -Wall -O3 -Iinclude
+CFLAGS:=-c -Wall -O3 -Iinclude -DDEBUG
 LFLAGS:=
 
 GEN_DIR:=bin
