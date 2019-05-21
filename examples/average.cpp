@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 void averageAndPrint(adc::Buffer<float> buffer) {
     for (auto channelData : buffer) {
         float sum = std::accumulate(channelData.begin(), channelData.end(), 0, std::plus<float>());
-        std::cout << sum / channelData.size() << " ";
+        std::cout << sum / channelData.size() << "\t";
     }
     std::cout << std::endl;
 }

@@ -13,7 +13,7 @@ static constexpr int pru1_memory_start = 0x4a302000; // Unused, but included for
 static constexpr int pru_shared_memory_start = 0x4a310000;
 
 // Map refers to both (all) buffers, since the data is double buffered
-static constexpr int map_size = pru_buffer_capacity * channels * buffers;
+static constexpr int map_size = pru_buffer_capacity * channels * buffers * sizeof(uint32_t);
 
 Cape::Cape() {
     if((memory_fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1){
@@ -28,8 +28,8 @@ Cape::Cape() {
 }
 
 Cape::~Cape() {
-    munmap((void*)buffer_number_base, map_size);
-    munmap((void*)buffer_base, 4);
+    munmap((void*)buffer_number_base, 4);
+    munmap((void*)buffer_base, map_size);
     close(memory_fd);
 }
 
@@ -45,11 +45,25 @@ void Cape::beginStream<float>(std::function<void(adc::Buffer<float>)> callback) 
             if (buffer_number != last_buffer + 1) {
                 std::cout << "Buffer dropped. Amt: " << buffer_number - last_buffer - 1 << std::endl;
             }
-//            std::cout << "New buffer! " << last_buffer << std::endl;
 #endif
             last_buffer = buffer_number;
 
             // perform the read
+            std::vector<std::vector<float>> data { channels };
+            int buffer_offset = (buffer_number & 1) ? pru_buffer_capacity * channels : 0;
+            uint32_t* buffer_start = &((uint32_t*) buffer_base)[buffer_offset];
+
+            for (int i = 0; i < channels; i++) {
+                data[i] = std::vector<float>(pru_buffer_capacity);
+                for (int j = 0; j < pru_buffer_capacity; j++) {
+                    // Convert from 24bit signed to floating point
+                    uint32_t sample = buffer_start[j + pru_buffer_capacity * i] ^ (1 << 23); // convert to unsigned
+                    data[i][j] = (sample / 8388608.0f) - 1.0f;
+                }
+            }
+
+            Buffer<float> buffer { data };
+            callback(buffer);
         }
     }
 }

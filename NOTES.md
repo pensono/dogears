@@ -34,11 +34,21 @@ Buffer Size: 8KiB / 2 buffers = 4KiB
 Memory per channel: 4Kib / 4 channels = 1KiB
 Samples per channel in each buffer: 1Kib / 4 bytes = 256 samples
 
-Ideally, the PRU signals to the arm core when it has data available. This could potentailly be accomplished
+Ideally, the PRU signals to the arm core when it has data available. This could potentially be accomplished
 through the RPMsg interface (although it seems quite heavyweight). Until such a solution is implemented, 
 the arm core will poll a section in memory containing a monotonically increasing counter, called the 
 buffer number. Any time this number is incremented, a new buffer is available. The parity of this 
 counter is used to determine which buffer is available.
+
+Data in each buffer is laid out first by channel, and then by sample. The entire PRU0 memory will look as follows:
+```
+  #-------------------------------------------#-------------------------------------------#
+  | CH0 BUF0 | CH1 BUF0 | CH2 BUF0 | CH3 BUF0 | CH0 BUF1 | CH1 BUF1 | CH2 BUF1 | CH3 BUF1 |
+  #-------------------------------------------#-------------------------------------------#
+```
+Each sample is stored as a 32 bit signed integer. This could later be changed to 24 for better system performance.
+Data is placed in the buffer this way to reduce the amount of work needed to be done by the CPU. There's extra
+time between each transmission from the ADC that the PRU can do a little more work putting things in the right place.
 
 ## Logistics
 ### Editors.
