@@ -5,14 +5,7 @@
 
 namespace adc {
 
-
-// TODO Format
-// Raw
-// uV
-// mV
-// Float (-1 to 1)
-  
-// A datastructure which allows data from all channels to be grouped together 
+// A data structure which allows data from all channels to be grouped together
 // easily.
 template<class T>
 class Buffer {
@@ -25,7 +18,7 @@ class Buffer {
     /**
        Get all the data associated with a particular channel
      */
-    const std::vector<T> channelData(unsigned int channel) const {
+    const std::vector<T> channel(unsigned int channel) const {
       assert(channel < channels());
       return data[channel];
     };
@@ -33,12 +26,12 @@ class Buffer {
     /**
        Get all the data associated with a particular sample in time
      */
-    const std::vector<T> sampleData(unsigned int sample) const {
+    const std::vector<T> sample(unsigned int sample) const {
       assert(sample < samples());
       
       std::vector<T> result(channels());
       for (unsigned int i = 0; i < channels(); i++) {
-        // This is potentailly very slow. It might be useful to be able to say
+        // This is potentially very slow. It might be useful to be able to say
         // if you want the data in sample or channel major layout
         result[i] = data[i][sample];
       }

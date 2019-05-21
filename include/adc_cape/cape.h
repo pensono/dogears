@@ -11,7 +11,7 @@ static constexpr int buffers = 2; // double buffered
 static constexpr int sample_rate = 105469;
   
 /**
-   Only one data aquisition method should be used at a time.
+   Only one data acquisition method should be used at a time.
  */
 class Cape {
   public:
@@ -28,6 +28,12 @@ class Cape {
       Synchronously captures data for the given number of samples.
      */
     Buffer<int> capture(unsigned int samples);
+
+    /**
+      Asynchronously captures data for the given number of samples.
+     */
+    template<typename T>
+    Buffer<T> capture(unsigned int samples, std::function<void(Buffer<T>)> callback);
     
     /**
       Samples a single channel. This is intended to measure DC signals. Calling

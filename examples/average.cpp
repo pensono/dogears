@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
     adc::Cape cape;
     
     std::cout << "Beginning stream..." << std::endl;
-    cape.beginStream<float>(averageAndPrint);
+    cape.beginStream<float>(averageAndPrintIndexes);
     
     // Streaming happens s
     system("pause");
@@ -31,9 +31,9 @@ void averageAndPrint(adc::Buffer<float> buffer) {
 void averageAndPrintIndexes(adc::Buffer<float> buffer) {
     for (unsigned int channelNum = 0; channelNum < buffer.channels(); channelNum++) {
         float sum = 0.0f;
-        std::vector<float> channelData = buffer.channelData(channelNum);
-        
-        for (unsigned int i = 0; i < channelData.size(); channelNum++) {
+        std::vector<float> channelData = buffer.channel(channelNum);
+
+        for (unsigned int i = 0; i < channelData.size(); i++) {
             sum += channelData[i];
         }
         

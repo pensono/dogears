@@ -57,7 +57,8 @@ void Cape::beginStream<float>(std::function<void(adc::Buffer<float>)> callback) 
                 data[i] = std::vector<float>(pru_buffer_capacity);
                 for (int j = 0; j < pru_buffer_capacity; j++) {
                     // Convert from 24bit signed to floating point
-                    uint32_t sample = buffer_start[j + pru_buffer_capacity * i] ^ (1 << 23); // convert to unsigned
+                    // convert to unsigned
+                    uint32_t sample = ((buffer_start[j + pru_buffer_capacity * i] ^ (1 << 23)) - (1 << 23)) & 0xFFFFFF;
                     data[i][j] = (sample / 8388608.0f) - 1.0f;
                 }
             }
