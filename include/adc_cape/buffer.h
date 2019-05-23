@@ -12,6 +12,7 @@ template<typename format>
 class Buffer {
   public:
     Buffer(std::vector<std::vector<typename format::backing_type>> data) : data(data) {
+      static_assert(std::is_base_of<Format, format>::value, "Invalid format specified. Use something from format.h");
       assert(data.size() >= 1);
       // Assert each element in data is the same size
     }

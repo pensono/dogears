@@ -34,21 +34,4 @@ Cape::~Cape() {
     close(memory_fd);
 }
 
-
-//template<>
-//Buffer<Raw> Cape::capture(unsigned int samples) {
-//    // Temporary stub
-//    std::vector<std::vector<int>> data(4, std::vector<int>(samples));
-//
-//    float frequency = 1000.0f;
-//
-//    for (unsigned int channel = 0; channel < 4; channel++) {
-//        for (unsigned int sample = 0; sample < samples; sample++) {
-//            data[channel][sample] = 0x4FFFFF * sin(channel + 3.41459 * 2 * sample * frequency / sample_rate);
-//        }
-//    }
-//
-//    return data;
-//}
-
 }

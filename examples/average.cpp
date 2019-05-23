@@ -12,9 +12,6 @@ int main(int argc, char* argv[]) {
     
     std::cout << "Beginning stream..." << std::endl;
 
-    std::vector<std::vector<float>> data;
-    adc::Buffer<adc::Normalized> test { data };
-
     cape.beginStream<adc::Normalized>(averageAndPrint);
     
     // Streaming happens asynchronously
