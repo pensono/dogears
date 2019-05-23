@@ -2,15 +2,16 @@
 
 #include <vector>
 #include <assert.h>
+#include "adc_cape/format.h"
 
 namespace adc {
 
 // A data structure which allows data from all channels to be grouped together
 // easily.
-template<class T>
+template<typename format>
 class Buffer {
   public:
-    Buffer(std::vector<std::vector<T>> data) : data(data) {
+    Buffer(std::vector<std::vector<typename format::backing_type>> data) : data(data) {
       assert(data.size() >= 1);
       // Assert each element in data is the same size
     }
@@ -18,7 +19,7 @@ class Buffer {
     /**
        Get all the data associated with a particular channel
      */
-    const std::vector<T> channel(unsigned int channel) const {
+    const std::vector<typename format::backing_type> channel(unsigned int channel) const {
       assert(channel < channels());
       return data[channel];
     };
@@ -26,10 +27,10 @@ class Buffer {
     /**
        Get all the data associated with a particular sample in time
      */
-    const std::vector<T> sample(unsigned int sample) const {
+    const std::vector<typename format::backing_type> sample(unsigned int sample) const {
       assert(sample < samples());
       
-      std::vector<T> result(channels());
+      std::vector<typename format::backing_type> result(channels());
       for (unsigned int i = 0; i < channels(); i++) {
         // This is potentially very slow. It might be useful to be able to say
         // if you want the data in sample or channel major layout
@@ -54,11 +55,11 @@ class Buffer {
     };
     
     // Iterates over the channels
-    typename std::vector<std::vector<T>>::const_iterator begin() const { return data.begin(); }
-    typename std::vector<std::vector<T>>::const_iterator end() const { return data.end(); }
+    typename std::vector<std::vector<typename format::backing_type>>::const_iterator begin() const { return data.begin(); }
+    typename std::vector<std::vector<typename format::backing_type>>::const_iterator end() const { return data.end(); }
     
   private:
-    const std::vector<std::vector<T>> data;
+    const std::vector<std::vector<typename format::backing_type>> data;
 };
 
 }

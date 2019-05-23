@@ -15,8 +15,12 @@ The source is divided into three subdirectories:
 The pru and c++ sources build with the included makefiles.
 
 ## C++ Implementation notes
-The library allows for samples to be retrieved either as 32-bit signed integers or floating 
-point numbers. Templates are used to keep the code generic.
+The library allows for samples to be retrieved in a variety of formats. The problem of addressing how to 
+deal with multiple formats in library code has many solutions, but I believe that the solution chosen
+here balances client and implementer usability well. In `format.h` there are several structs which have
+static properties used to manipulate the formats. If a method wishes to be format agnostic, it adds
+a `format` template parameter, and can then use the format classes generically. With this method, using 
+templates is not required, the formats may also be hard-coded.
 
 ## PRU Implementation notes
 When running `make pru-run` for the first time, the script may complain about not being able to stop the
@@ -71,6 +75,7 @@ sudo systemctl restart vsftpd
 Then in CLion, add the BeagleBone under `Build, Exeution, Deployment > Deployment`. If you want to be able to open
 an SSH session in CLion, use teh SFTP option. Then, enable uploading changed files automatically under
 `Build, Exeution, Deployment > Deployment > Options`. It's also possible to start an SSH session from within 
-CLion, by going to `Tools > Start SSH Session...`.
+CLion, by going to `Tools > Start SSH Session...`. You might want to set the encoding to UTF-8 in the settings,
+ `Tools > SSH Terminal > Default Encoding`. 
 
 [IntelliJ Reference](https://www.jetbrains.com/help/idea/uploading-and-downloading-files.html#automaticUploadOnUpdate)

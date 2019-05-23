@@ -4,21 +4,25 @@
 #include "adc_cape/cape.h"
 #include "adc_cape/buffer.h"
 
-void averageAndPrint(adc::Buffer<float> buffer);
-void averageAndPrintIndexes(adc::Buffer<float> buffer);
+void averageAndPrint(adc::Buffer<adc::Normalized> buffer);
+void averageAndPrintIndexes(adc::Buffer<adc::Normalized> buffer);
 
 int main(int argc, char* argv[]) {
     adc::Cape cape;
     
     std::cout << "Beginning stream..." << std::endl;
-    cape.beginStream<float>(averageAndPrintIndexes);
+
+    std::vector<std::vector<float>> data;
+    adc::Buffer<adc::Normalized> test { data };
+
+    cape.beginStream<adc::Normalized>(averageAndPrint);
     
-    // Streaming happens s
+    // Streaming happens asynchronously
     system("pause");
     exit(0);
 }
 
-void averageAndPrint(adc::Buffer<float> buffer) {
+void averageAndPrint(adc::Buffer<adc::Normalized> buffer) {
     for (auto channelData : buffer) {
         float sum = std::accumulate(channelData.begin(), channelData.end(), 0, std::plus<float>());
         std::cout << sum / channelData.size() << "\t";
@@ -28,7 +32,7 @@ void averageAndPrint(adc::Buffer<float> buffer) {
 
 
 // Same thing as averageAndPrint, but using fewer modern C++ features
-void averageAndPrintIndexes(adc::Buffer<float> buffer) {
+void averageAndPrintIndexes(adc::Buffer<adc::Normalized> buffer) {
     for (unsigned int channelNum = 0; channelNum < buffer.channels(); channelNum++) {
         float sum = 0.0f;
         std::vector<float> channelData = buffer.channel(channelNum);
