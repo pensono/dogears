@@ -14,12 +14,30 @@ void write_int32(std::ofstream& f, uint32_t data);
 int main(int argc, char* argv[]) {
     adc::Cape cape;
     
-    if (argc != 3) {
+    if (argc != 3 && argc != 3 + adc::channels) {
         std::cout << "Usage:" << std::endl;
-        std::cout << "  " << argv[0] << " samples output_file" << std::endl;
+        std::cout << "  " << argv[0] << " samples output_file [gain gain gain gain]" << std::endl;
         std::cout << "Example:" << std::endl;
-        std::cout << "  " << argv[0] << " 144000 output.wav" << std::endl;
+        std::cout << "  " << argv[0] << " 105469 output.wav" << std::endl;
+        std::cout << "or" << std::endl;
+        std::cout << "  " << argv[0] << " 105469 output.wav 0 10 20 30" << std::endl;
         exit(1);
+    }
+
+    if (argc == 3 + adc::channels) {
+        for (unsigned int i = 0; i < adc::channels; i++) {
+            int value = std::stoi(argv[3 + i]);
+            switch (value) {
+                case 0: cape.setGain(i, adc::Gain::dB_0); break;
+                case 10: cape.setGain(i, adc::Gain::dB_10); break;
+                case 20: cape.setGain(i, adc::Gain::dB_20); break;
+                case 30: cape.setGain(i, adc::Gain::dB_30); break;
+                default:
+                    std::cout << "Bad value for gain: " << argv[3 + i] << std::endl;
+                    std::cout << "Must be 0, 10, 20, or 30" << std::endl;
+                    exit(1);
+            }
+        };
     }
     
     unsigned int samples = std::stoi(argv[1]);

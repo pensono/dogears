@@ -1,5 +1,8 @@
 #include <cmath> // Temporary- for stubs
+#include <fstream>
+#include <iostream>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <stdexcept>
@@ -8,30 +11,77 @@
 #include "adc_cape/format.h"
 
 namespace adc {
-    
+
 static constexpr int pru0_memory_start = 0x4a300000;
 static constexpr int pru1_memory_start = 0x4a302000; // Unused, but included for completeness
 static constexpr int pru_shared_memory_start = 0x4a310000;
 
+// Each pair of elements are the pins for a single channel
+static const std::array<std::string, channels * 2> gain_pins = {
+  // ---CH0---  ---CH1----  -----CH2----  ---CH3----
+    "86", "87", "32", "36", "115", "117", "49", "48"
+};
+
 // Map refers to both (all) buffers, since the data is double buffered
 static constexpr int map_size = pru_buffer_capacity * channels * buffers * sizeof(uint32_t);
 
-Cape::Cape() {
-    if((memory_fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1){
-    	throw std::runtime_error("Failed to open memory! Are you root?");
+void writeFile(const std::string filename, const std::string contents) {
+    std::ofstream out(filename);
+    out << contents;
+    out.close();
+}
+
+Cape::Cape() : gains(channels, dB_0) {
+    // Setup GPIO pins
+    // All this business with configuring the pins over the FS can probably be replaced with a device tree overlay
+    for (unsigned int i = 0; i < channels * 2; i++) {
+        struct stat s;
+        if (stat(("/sys/class/gpio/gpio" + gain_pins[i]).c_str(), &s) != 0) {
+            writeFile("/sys/class/gpio/export", gain_pins[i]);
+        }
+        writeFile("/sys/class/gpio/gpio" + gain_pins[i] + "/direction", "out");
     }
-    
+
+    for (unsigned int i = 0; i < channels; i++) {
+        writeGain(i, dB_0);
+    }
+
+    if ((memory_fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) {
+        throw std::runtime_error("Failed to open memory! Are you root?");
+    }
+
     buffer_base = mmap(NULL, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, memory_fd, pru0_memory_start);
     buffer_number_base = mmap(NULL, 4, PROT_READ | PROT_WRITE, MAP_SHARED, memory_fd, pru_shared_memory_start);
     if (buffer_base == (void *) -1 || buffer_number_base == (void *) -1) {
-    	throw std::runtime_error("Failed to map base address");
+        throw std::runtime_error("Failed to map base address");
     }
 }
 
 Cape::~Cape() {
-    munmap((void*)buffer_number_base, 4);
-    munmap((void*)buffer_base, map_size);
+    munmap((void *) buffer_number_base, 4);
+    munmap((void *) buffer_base, map_size);
     close(memory_fd);
+}
+
+void Cape::setGain(unsigned int channel, Gain gain) {
+    assert(channel < channels);
+
+    if (gains[channel] == gain) {
+        return;
+    }
+
+    writeGain(channel, gain);
+}
+
+Gain Cape::getGain(unsigned int channel) {
+    assert(channel < channels);
+    return gains[channel];
+}
+
+void Cape::writeGain(unsigned int channel, Gain gain) {
+    const std::array<std::string, 2> values = { "0", "1" };
+    writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2] + "/value", values[gain & 1]);
+    writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2 + 1] + "/value", values[(gain & 2) >> 1]);
 }
 
 }

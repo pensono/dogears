@@ -1,5 +1,5 @@
-
-CFLAGS:=-c -Wall -O3 -Iinclude -DDEBUG
+# --std=c++17 -lstdc++fs needed for <filesystem>
+CFLAGS:=-c -Wall -O3 -Iinclude -DDEBUG --std=c++17 -lstdc++fs
 LFLAGS:=
 
 GEN_DIR:=bin
@@ -11,7 +11,7 @@ include src-pru/Makefrag
 include examples/Makefrag
 
 
-examples: libadc-cape.so $(EXAMPLES)
+examples: $(EXAMPLES)
 
 pru-run: $(GEN_DIR)/pru/adc-cape.out pru-stop pru-install pru-configPins pru-start
 

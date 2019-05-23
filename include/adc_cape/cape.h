@@ -11,6 +11,14 @@ static constexpr unsigned int pru_buffer_capacity = 256;
 static constexpr unsigned int channels = 4;
 static constexpr unsigned int buffers = 2; // double buffered
 static constexpr unsigned int sample_rate = 105469;
+
+enum Gain {
+    // Integer values correspond to the pin settings we feed into the analog switch
+    dB_0 = 0,
+    dB_10 = 1,
+    dB_20 = 2,
+    dB_30 = 3,
+};
   
 /**
    Only one data acquisition method should be used at a time.
@@ -57,6 +65,16 @@ class Cape {
      * to the current value being read by the ADC, averaged over some period of time.
      */
     void calibrate(); // TODO implement
+
+    /**
+     * Sets the gain of a particular channel
+     */
+    void setGain(unsigned int channel, Gain gain);
+
+    /**
+     * Gets the gain of a particular channel
+     */
+    Gain getGain(unsigned int channel);
     
   private:
     template <typename format>
@@ -65,9 +83,13 @@ class Cape {
             unsigned int startSample,
             unsigned int samples);
 
+    void writeGain(unsigned int channel, Gain gain);
+
     int memory_fd;
     volatile void* buffer_base;
     volatile void* buffer_number_base;
+
+    std::vector<Gain> gains;
 };
 
 template<typename format>
@@ -87,7 +109,7 @@ void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
 
             std::vector<std::vector<typename format::backing_type>>
                     data(channels, std::vector<typename format::backing_type>(pru_buffer_capacity));
-            read_into(data, buffer_number, 0, pru_buffer_capacity);
+            read_into<format>(data, buffer_number, 0, pru_buffer_capacity);
 
             Buffer<format> buffer { data };
             callback(buffer);
