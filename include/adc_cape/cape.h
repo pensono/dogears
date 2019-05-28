@@ -95,7 +95,7 @@ class Cape {
 template<typename format>
 void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
     volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
-    uint32_t last_buffer = -1;
+    uint32_t last_buffer = 0;
 
     while (true) {
         uint32_t buffer_number = *buffer_number_pru;

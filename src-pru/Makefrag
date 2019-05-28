@@ -31,6 +31,7 @@ endif
 
 PRU_DIR=$(wildcard /sys/devices/platform/ocp/4a32600*.pruss-soc-bus/4a300000.pruss/$(PRU_ADDR).*/remoteproc/remoteproc*)
 
+pru-run: $(GEN_DIR)/pru/adc-cape.out pru-stop pru-install pru-configPins pru-start
 
 pru-stop:
 	@echo "-    Stopping PRU $(PRUN)"
@@ -49,21 +50,21 @@ pru-configPins:
 	@config-pin P9_29 pruin  # DRDY
 	@config-pin P9_31 pruout # SCLK
 	@config-pin P9_30 pruin  # MISO
-	@config-pin P9_27 pruout # SYNC
-	@config-pin P9_25 pruout # DEBUG
+	@config-pin P9_28 pruout # SYNC
+	@config-pin P8_12 pruout # DEBUG
 
 $(GEN_DIR)/pru/adc-cape.out: $(GEN_DIR)/pru/adc-cape.obj $(GEN_DIR)/pru/main.obj
 	@mkdir -p $(GEN_DIR)/pru
-	@echo 'LD	$^' 
+	@echo 'LD	$@ <= $^'
 	@lnkpru -i$(PRU_CGT)/lib -i$(PRU_CGT)/include $(PRU_LFLAGS) -o $@ $^ $(LINKER_COMMAND_FILE) --library=libc.a $(LIBS) $^
 
 $(GEN_DIR)/pru/main.obj: src-pru/main.c
-	@echo 'CC	$<'
+	@echo 'CC	$@ <= $<'
 	@clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(PRU_CFLAGS) -fe $@ $<
 
 $(GEN_DIR)/pru/adc-cape.obj: src-pru/adc-cape.asm
 	@mkdir -p $(GEN_DIR)/pru
-	@echo 'CC	$<'
+	@echo 'CC	$@ <= $<'
 	@clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(PRU_CFLAGS) -D=PRUN=$(PRUN) -fe $@ $<
 
 .PHONY: pru-stop pru-start pru-install pru-configPins

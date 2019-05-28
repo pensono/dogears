@@ -11,8 +11,15 @@ The source is divided into three subdirectories:
 - `examples`: Example code is placed here. Adding a new example is the preferred way to test o
 - `include`: `.h` files which must be included by users of the cape
 - `lib`: Dynamically linked binaries which must be included by users of the cape
+- `test`: Files used for testing
 
 The pru and c++ sources build with the included makefiles.
+
+## Testing
+There are some unit tests in the `test` directory. These can be invoked with `make test`.
+
+Tests which require physical setup are also in this directory. These tests are designed as experiments
+for capturing data to evaluate the performance of the cape. 
 
 ## C++ Implementation notes
 The library allows for samples to be retrieved in a variety of formats. The problem of addressing how to 

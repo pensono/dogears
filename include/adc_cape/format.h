@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <string>
 
 // The format abstraction would greatly benefit from C++ Concepts,
 // once they are introduced into the language
@@ -36,8 +37,39 @@ struct Raw : public Format {
     static constexpr backing_type min = 0x00800000;
     static constexpr backing_type zero = 0x00000000;
 
-    static uint32_t convert(uint32_t raw) {
+    static backing_type convert(uint32_t raw) {
         return raw;
+    }
+};
+
+/**
+ * Values encoded as signed integers with 24 bits of resolution
+ */
+struct SignedInt : public Format {
+    typedef int32_t backing_type;
+    static constexpr backing_type max = (1 << 23) - 1;
+    static constexpr backing_type min = -(1 << 23);
+    static constexpr backing_type zero = 0;
+
+    static backing_type convert(uint32_t raw) {
+        // Perform a signed extension from 24 bits to 32 bits
+        // https://stackoverflow.com/a/42536138/2496050
+        uint32_t m = 1u << (24 - 1);
+        return (raw ^ m) - m;
+    }
+};
+
+/**
+ * Values encoded as unsigned integers with 24 bits of resolution
+ */
+struct UnsignedInt : public Format {
+    typedef int32_t backing_type;
+    static constexpr backing_type max = (1 << 24) - 1;
+    static constexpr backing_type min = 0;
+    static constexpr backing_type zero = 1 << 23;
+
+    static backing_type convert(uint32_t raw) {
+        return SignedInt::convert(raw) + zero;
     }
 };
 
@@ -46,38 +78,16 @@ struct Raw : public Format {
  */
 struct Normalized : public Format {
     typedef float backing_type;
-    static constexpr backing_type max =  1.0f; // May be slightly smaller... TODO verify what this actually is
+    static constexpr backing_type max =  0.999999881f;
     static constexpr backing_type min = -1.0f;
     static constexpr backing_type zero = 0.0f;
 
-    static float convert(uint32_t raw) {
-        // convert to unsigned
-        uint32_t uns = ((raw ^ (1 << 23)) - (1 << 23)) & 0xFFFFFF;
-        // Convert to float
-        return (uns / 8388608.0f) - 1.0f;
+    static backing_type convert(uint32_t raw) {
+        return SignedInt::convert(raw) / 8388608.0f;
     }
 };
-
-/**
- * Values encoded as signed integers
- */
-struct SignedInt : public Format {
-    typedef int32_t backing_type;
-    static constexpr backing_type max = 1 << 23;
-    static constexpr backing_type min = -(1 << 23) - 1;
-    static constexpr backing_type zero = 0;
-
-    static float convert(uint32_t raw) {
-        // Perform a signed extension from 24 bits to 32 bits
-        // https://stackoverflow.com/a/42536138/2496050
-        uint32_t m = 1u << (24 - 1);
-        return (raw ^ m) - m;
-    }
-};
-
 
 // TODO
-// Unsigned int
 // uV
 // mV
 

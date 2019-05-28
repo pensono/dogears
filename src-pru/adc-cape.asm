@@ -7,11 +7,11 @@
   .asg  3,  PRU_EVTOUT_0        ; the event number that is sent back
   
  ; Pin mappings. tX maps to PRU0_X
-  .asg "r31.t1", DRDY ; Pin 29 ; Make sure to change the WBC instructions
-  .asg "r30.t0", SCLK ; Pin 31  
-  .asg "r31.t2", MISO ; Pin 30
-  .asg "r30.t5", SYNC ; Pin 27
-  .asg "r30.t7", DEBUG ; Pin 25
+  .asg "r31.t1", DRDY ; Pin P9_ 29 ; Make sure to change the WBC instructions
+  .asg "r30.t0", SCLK ; Pin P9_31
+  .asg "r31.t2", MISO ; Pin P9_30
+  .asg "r30.t3", SYNC ; Pin P9_28
+  .asg "r30.t14", DEBUG ; Pin P8_11
 
 ; Constants
   .asg "r27", C_1024
@@ -52,9 +52,9 @@ READ_CHANNEL_END?:
 
 ; Using register 0 for all temporary storage (reused multiple times)
 START:
-   XOR r30, r30, 1<<7 ; Debug pulse
-   XOR r30, r30, 1<<7 ; Debug pulse
-   XOR r30, r30, 1<<7 ; Debug pulse
+   SET r30, r30, 14 ; Debug pulse
+   CLR r30, r30, 14 ; Debug pulse
+   SET r30, r30, 14 ; Debug pulse
    ; Init pins
    SET r30, r30, 5 ; Sync is normally pulled high
    
@@ -69,7 +69,7 @@ START:
    SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
 
    ; Sync pulse
-   CLR r30, r30, 5
+   CLR r30, r30, 3
    NOP
    NOP
    NOP
@@ -78,18 +78,18 @@ START:
    NOP
    NOP
    NOP
-   SET r30, r30, 5
+   SET r30, r30, 3
    
 MAINLOOP:
    WBC r31, 1 ; Wait for DRDY
 
    ; The ADC will always send out all four channels based on the board configuration
-   XOR r30, r30, 1<<7 ; Debug pulse
+   CLR r30, r30, 14 ; Debug pulse
    read_channel r20
    read_channel r21
    read_channel r22
    read_channel r23
-   XOR r30, r30, 1<<7 ; Debug pulse
+   SET r30, r30, 14 ; Debug pulse
 
    ; There's alot of delay between samples (~6us), so this sassembly code won't be written efficiently
 

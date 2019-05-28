@@ -5,16 +5,16 @@ SRCS=$(wildcard src-cpp/*.cpp)
 OBJS=$(SRCS:src-cpp/%.cpp=$(GEN_DIR)/cpp/%.o)
 
 $(GEN_DIR)/libadc-cape.a: $(OBJS)
-	@echo 'AR	$@ $<'
+	@echo 'AR	$@ <= $^'
 	@ar rcs $@ $^
 	
 memory_test: $(OBJS)
-	@echo 'LD	$@ $<'
+	@echo 'LD	$@ <= $^'
 	@$(CC) $(LFLAGS) $^ -o $@
 
 $(GEN_DIR)/cpp/%.o: src-cpp/%.cpp
 	@mkdir -p $(GEN_DIR)/cpp
-	@echo 'G++	$<'
+	@echo 'G++	$@ <= $^'
 	@$(CC) $(CFLAGS) -fPIC $< -o $@
 
 $(GEN_DIR)/cpp/cape.o: include/adc_cape/cape.h
