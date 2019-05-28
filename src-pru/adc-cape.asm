@@ -41,6 +41,7 @@ read_channel .macro out_reg
    LOOP READ_CHANNEL_END?, BITS_PER_CHANNEL
    AND r7, r31, 1<<2 ; Read in/mask our bit to the right
    LSL out_reg, out_reg, 1 ; Shift
+   NOP
    SET r30, r30, 0 ; Clock high
    LSR r7, r7, 2 ; Shift temp reg
    OR out_reg, out_reg, r7 ; Copy into buffer
@@ -53,6 +54,7 @@ READ_CHANNEL_END?:
 
 ; Using register 0 for all temporary storage (reused multiple times)
 START:
+   LDI32 DEBUG_BIT, 1 << 14
    XOR r30, r30, DEBUG_BIT ; Debug pulse
    XOR r30, r30, DEBUG_BIT ; Debug pulse
    XOR r30, r30, DEBUG_BIT ; Debug pulse
@@ -66,7 +68,6 @@ START:
    LDI32 C_1024, 1024
    LDI32 C_2048, 2048
    LDI32 C_3072, 3072
-   LDI32 DEBUG_BIT, 1 << 14
    
    LDI32 BUFFER_NUMBER, 0
    SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
@@ -87,10 +88,12 @@ MAINLOOP:
    WBC r31, 1 ; Wait for DRDY
 
    ; The ADC will always send out all four channels based on the board configuration
+   XOR r30, r30, DEBUG_BIT ; Debug pulse
    read_channel r20
    read_channel r21
    read_channel r22
    read_channel r23
+   XOR r30, r30, DEBUG_BIT ; Debug pulse
 
    ; There's alot of delay between samples (~6us), so this sassembly code won't be written efficiently
 
