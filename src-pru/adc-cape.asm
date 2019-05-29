@@ -14,6 +14,7 @@
   .asg "r30.t14", DEBUG ; Pin P8_11
 
 ; Constants
+  .asg "r26", DEBUG_BIT
   .asg "r27", C_1024
   .asg "r28", C_2048
   .asg "r29", C_3072
@@ -41,7 +42,7 @@ read_channel .macro out_reg
    AND r7, r31, 1<<2 ; Read in/mask our bit to the right
    LSL out_reg, out_reg, 1 ; Shift
    SET r30, r30, 0 ; Clock high
-   LSR r7, r7, 1 ; Shift temp reg
+   LSR r7, r7, 2 ; Shift temp reg
    OR out_reg, out_reg, r7 ; Copy into buffer
    NOP
    CLR r30, r30, 0 ; Clock low
@@ -52,9 +53,10 @@ READ_CHANNEL_END?:
 
 ; Using register 0 for all temporary storage (reused multiple times)
 START:
-   SET r30, r30, 14 ; Debug pulse
-   CLR r30, r30, 14 ; Debug pulse
-   SET r30, r30, 14 ; Debug pulse
+   XOR r30, r30, DEBUG_BIT ; Debug pulse
+   XOR r30, r30, DEBUG_BIT ; Debug pulse
+   XOR r30, r30, DEBUG_BIT ; Debug pulse
+
    ; Init pins
    SET r30, r30, 5 ; Sync is normally pulled high
    
@@ -64,6 +66,7 @@ START:
    LDI32 C_1024, 1024
    LDI32 C_2048, 2048
    LDI32 C_3072, 3072
+   LDI32 DEBUG_BIT, 1 << 14
    
    LDI32 BUFFER_NUMBER, 0
    SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
@@ -84,12 +87,10 @@ MAINLOOP:
    WBC r31, 1 ; Wait for DRDY
 
    ; The ADC will always send out all four channels based on the board configuration
-   CLR r30, r30, 14 ; Debug pulse
    read_channel r20
    read_channel r21
    read_channel r22
    read_channel r23
-   SET r30, r30, 14 ; Debug pulse
 
    ; There's alot of delay between samples (~6us), so this sassembly code won't be written efficiently
 
@@ -98,6 +99,39 @@ MAINLOOP:
    ADD BUFFER_OFFSET, BUFFER_OFFSET, SAMPLE_OFFEST
 
    SBBO &r20, BUFFER_OFFSET, 0,      SAMPLE_SIZE_BYTES
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   LBBO &r21, BUFFER_OFFSET, 0,      SAMPLE_SIZE_BYTES
+   MOV r22, r20
+   QBEQ CMP_FAIL, r21, r20
+   XOR r30, r30, DEBUG_BIT ; Debug pulse
+CMP_FAIL:
    SBBO &r21, BUFFER_OFFSET, C_1024, SAMPLE_SIZE_BYTES
    SBBO &r22, BUFFER_OFFSET, C_2048, SAMPLE_SIZE_BYTES
    SBBO &r23, BUFFER_OFFSET, C_3072, SAMPLE_SIZE_BYTES

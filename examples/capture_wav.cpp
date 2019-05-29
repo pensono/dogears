@@ -2,14 +2,16 @@
 #include <fstream>
 #include <numeric>
 #include <cstdint>
+#include <climits>
 #include <arpa/inet.h>
 #include "adc_cape/cape.h"
 #include "adc_cape/buffer.h"
 
-void write_wav(std::ofstream& f, const adc::Buffer<adc::SignedInt>& data);
+void write_wav(std::ofstream& f, const adc::Buffer<adc::Raw>& data);
 void write_int16(std::ofstream& f, uint16_t data);
 void write_int24(std::ofstream& f, uint32_t data);
 void write_int32(std::ofstream& f, uint32_t data);
+void write_float32(std::ofstream& f, float data);
 
 int main(int argc, char* argv[]) {
     adc::Cape cape;
@@ -43,22 +45,34 @@ int main(int argc, char* argv[]) {
     unsigned int samples = std::stoi(argv[1]);
     
     std::cout << "Capturing..." << std::endl;
-    adc::Buffer<adc::SignedInt> data = cape.capture<adc::SignedInt>(samples);
+    adc::Buffer<adc::Raw> data = cape.capture<adc::Raw>(samples);
     std::ofstream output (argv[2], std::ios::binary);
+
+//    std::cout << std::hex;
+//    for (unsigned int channel = 0; channel < data.channels(); channel++) {
+//        for (auto sample : data.channel(channel)) {
+//            std::cout << sample << ",";
+//        }
+//        std::cout << std::endl;
+//    }
     
     std::cout << "Writing to " << argv[2] << std::endl;
     write_wav(output, data);
-    
+
+    std::cout << "Done" << std::endl;
     exit(0);
 }
 
-void write_wav(std::ofstream& f, const adc::Buffer<adc::SignedInt>& data) {
-    // http://www.cplusplus.com/forum/beginner/166954/
+void write_wav(std::ofstream& f, const adc::Buffer<adc::Raw>& data) {
     // http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html (PCM Data section)
-    
+
+#if CHAR_BIT != 8
+#error "Bytes are not 8 bits"
+#endif
+
     unsigned int wave_header_size = 12;
     unsigned int fmt_chunk_size = 16;
-    unsigned int sample_size_bytes = 24 / 8;
+    unsigned int sample_size_bytes = 24 / CHAR_BIT;
     unsigned int payload_size = sample_size_bytes * data.channels() * data.samples();
     unsigned int riff_size = payload_size + fmt_chunk_size + wave_header_size;
     
@@ -72,14 +86,14 @@ void write_wav(std::ofstream& f, const adc::Buffer<adc::SignedInt>& data) {
     write_int32(f, adc::sample_rate);
     write_int32(f, adc::sample_rate * sample_size_bytes * data.channels()); // Data rate
     write_int16(f, sample_size_bytes * data.channels()); // Block size, one per timestep
-    write_int16(f, sample_size_bytes * 8); // Sample size
+    write_int16(f, sample_size_bytes * CHAR_BIT); // Sample size
     
     f << "data";
     write_int32(f, sample_size_bytes * data.channels() * data.samples());
     
     for (unsigned int sample = 0; sample < data.samples(); sample++) {
-        std::vector<int32_t> sampleData = data.sample(sample);
-        for (int s : sampleData) {
+        std::vector<uint32_t> sampleData = data.sample(sample);
+        for (uint32_t s : sampleData) {
             write_int24(f, s);
         }
     }
