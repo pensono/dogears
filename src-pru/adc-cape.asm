@@ -37,14 +37,19 @@
 
 
 read_channel .macro out_reg
-   LDI32 out_reg, 0 ; Clear the input buffer. Not necessary once everything is 24 bits
    LOOP READ_CHANNEL_END?, BITS_PER_CHANNEL
-   AND r7, r31, 1<<2 ; Read in/mask our bit to the right
    LSL out_reg, out_reg, 1 ; Shift
    NOP
+   NOP
+   NOP
+   NOP
+   NOP ; Bonus
    SET r30, r30, 0 ; Clock high
-   LSR r7, r7, 2 ; Shift temp reg
+   AND r7, r31, 1<<2 ; Read in/mask our bit to the right
+   LSR r7, r7, 2 ; Shift temp reg back
    OR out_reg, out_reg, r7 ; Copy into buffer
+   NOP
+   NOP
    NOP
    CLR r30, r30, 0 ; Clock low
    ; Must read one bit every 7 cycles
@@ -55,7 +60,7 @@ READ_CHANNEL_END?:
 ; Using register 0 for all temporary storage (reused multiple times)
 START:
    LDI32 DEBUG_BIT, 1 << 14
-   XOR r30, r30, DEBUG_BIT ; Debug pulse
+   SET r30, r30, 14 ; Debug pulse
    XOR r30, r30, DEBUG_BIT ; Debug pulse
    XOR r30, r30, DEBUG_BIT ; Debug pulse
 
@@ -102,42 +107,14 @@ MAINLOOP:
    ADD BUFFER_OFFSET, BUFFER_OFFSET, SAMPLE_OFFEST
 
    SBBO &r20, BUFFER_OFFSET, 0,      SAMPLE_SIZE_BYTES
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   NOP
-   LBBO &r21, BUFFER_OFFSET, 0,      SAMPLE_SIZE_BYTES
-   MOV r22, r20
-   QBEQ CMP_FAIL, r21, r20
-   XOR r30, r30, DEBUG_BIT ; Debug pulse
-CMP_FAIL:
    SBBO &r21, BUFFER_OFFSET, C_1024, SAMPLE_SIZE_BYTES
    SBBO &r22, BUFFER_OFFSET, C_2048, SAMPLE_SIZE_BYTES
    SBBO &r23, BUFFER_OFFSET, C_3072, SAMPLE_SIZE_BYTES
+
+   LDI32 r20, 0 ; Clear the input buffer. Not necessary once everything is 24 bits
+   LDI32 r21, 0
+   LDI32 r22, 0
+   LDI32 r23, 0
 
    ADD SAMPLE_OFFEST, SAMPLE_OFFEST, SAMPLE_SIZE_BYTES
 

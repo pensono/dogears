@@ -48,14 +48,6 @@ int main(int argc, char* argv[]) {
     adc::Buffer<adc::Raw> data = cape.capture<adc::Raw>(samples);
     std::ofstream output (argv[2], std::ios::binary);
 
-//    std::cout << std::hex;
-//    for (unsigned int channel = 0; channel < data.channels(); channel++) {
-//        for (auto sample : data.channel(channel)) {
-//            std::cout << sample << ",";
-//        }
-//        std::cout << std::endl;
-//    }
-    
     std::cout << "Writing to " << argv[2] << std::endl;
     write_wav(output, data);
 
