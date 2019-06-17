@@ -80,7 +80,7 @@ sudo systemctl restart vsftpd
 ```
 
 Then in CLion, add the BeagleBone under `Build, Exeution, Deployment > Deployment`. If you want to be able to open
-an SSH session in CLion, use teh SFTP option. Then, enable uploading changed files automatically under
+an SSH session in CLion, use the SFTP option. Then, enable uploading changed files automatically under
 `Build, Exeution, Deployment > Deployment > Options`. It's also possible to start an SSH session from within 
 CLion, by going to `Tools > Start SSH Session...`. You might want to set the encoding to UTF-8 in the settings,
  `Tools > SSH Terminal > Default Encoding`. 

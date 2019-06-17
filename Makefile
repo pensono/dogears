@@ -4,7 +4,7 @@ LFLAGS:=
 
 GEN_DIR:=bin
 
-all: pru-run memory_test
+all: pru-run test_rpmsg
 
 include src-cpp/Makefrag
 include src-pru/Makefrag

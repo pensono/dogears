@@ -1,0 +1,20 @@
+
+CC:=g++
+
+TEST_SOURCES:=$(wildcard test/*test.cpp)
+TESTS:=$(TEST_SOURCES:test/%.cpp=%)
+
+test: $(TESTS:%=run-%)
+
+run-%: $(GEN_DIR)/test/%
+	@echo "TEST	$(@:run-%=%)"
+	-@$(GEN_DIR)/test/$(@:run-%=%)
+
+$(GEN_DIR)/test/%: $(GEN_DIR)/test/%.o $(GEN_DIR)/libadc-cape.a
+	@echo 'LD	$@ $^'
+	@$(CC) $(LFLAGS) -o $@ $^  -Lbin -ladc-cape
+
+$(GEN_DIR)/test/%.o: test/%.cpp
+	@mkdir -p $(GEN_DIR)/test
+	@echo 'G++	$<'
+	@$(CC) $(CFLAGS) -o $@ $^

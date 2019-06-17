@@ -1,5 +1,5 @@
 
-  .cdecls "main.c"
+;  .cdecls "main.c"
   .clink
   .global START
   .global signalToHost
@@ -74,7 +74,7 @@ START:
    LDI32 C_2048, 2048
    LDI32 C_3072, 3072
    
-   LDI32 BUFFER_NUMBER, 0
+   LDI32 BUFFER_NUMBER, 137
    SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
 
    ; Sync pulse
@@ -90,6 +90,9 @@ START:
    SET r30, r30, 3
    
 MAINLOOP:
+   WBS r31, 14
+   SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
+
    WBC r31, 1 ; Wait for DRDY
 
    ; The ADC will always send out all four channels based on the board configuration
