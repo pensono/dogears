@@ -1,6 +1,7 @@
 #include <iostream>
 #include <numeric>
 #include <vector>
+#include <iomanip>      // std::setprecision
 #include "adc_cape/cape.h"
 #include "adc_cape/buffer.h"
 
@@ -11,6 +12,8 @@ int main(int argc, char* argv[]) {
     adc::Cape cape;
     
     std::cout << "Beginning stream..." << std::endl;
+    std::cout << std::fixed;
+    std::cout << std::setprecision(6); // Consistently sized outputs
 
     cape.beginStream<adc::Normalized>(averageAndPrint);
     
