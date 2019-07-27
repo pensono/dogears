@@ -99,6 +99,9 @@ void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
 
     while (true) {
         uint32_t buffer_number = *buffer_number_pru;
+        std::cout << "Buffer number: " << buffer_number << std::endl;
+        continue;
+
         if (last_buffer != buffer_number) {
 #ifdef DEBUG
             if (buffer_number != last_buffer + 1 && last_buffer != 0) {

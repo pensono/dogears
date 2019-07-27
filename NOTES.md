@@ -68,8 +68,20 @@ I found the [Cloud9](http://beaglebone.local:3000/ide.html) editor to be somewha
 and there's a bug where files in the editor may not be in sync with the files on disk. In addition, being web
 based, the performance of the editor itself is not great. 
 
-I was able to set up remote editing using JetBrains' CLion. The only caveat is that you must manually save files
-(by pressing Shift-Alt-Q by default). It required an FTP server to be installed on the beaglebone: 
+I was able to set up remote editing using JetBrains' CLion over an NFS share. On the beaglebone:
+```
+sudo apt install nfs-kernel-server
+# For access over USB
+echo "/home/debian/adc-cape 192.168.7.0/255.255.255.252(rw,no_root_squash,subtree_check)" | sudo tee -a /etc/exports
+```
+
+The process of mounting this varies by host. Here's how to do it on linux:
+```
+mount 192.168.1.100:/home/debian /mnt/bbb
+```
+
+If you're on Windows, unfortunately microsoft has removed NFS functionality from some versions of Windows. You can still
+set up an FTP connection. On the beaglebone:
 [Setting up FTP](https://www.digitalocean.com/community/tutorials/how-to-set-up-vsftpd-for-a-user-s-directory-on-debian-9)
 ```
 sudo apt-get install vsftpd
