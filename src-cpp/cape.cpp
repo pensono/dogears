@@ -1,17 +1,18 @@
-#include <cmath> // Temporary- for stubs
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/mman.h>
 #include <stdexcept>
-#include <iostream>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <prussdrv.h>
+#include <pruss_intc_mapping.h>
 #include "adc_cape/cape.h"
 #include "adc_cape/format.h"
 
 namespace adc {
 
+static constexpr int PRU_NUM = 0;
 static constexpr int pru0_memory_start = 0x4a300000;
 static constexpr int pru1_memory_start = 0x4a302000; // Unused, but included for completeness
 static constexpr int pru_shared_memory_start = 0x4a310000;
@@ -32,7 +33,7 @@ void writeFile(const std::string filename, const std::string contents) {
 }
 
 Cape::Cape() : gains(channels, dB_0) {
-    // Setup GPIO pins
+    // Setup GPIO pins/gains
     // All this business with configuring the pins over the FS can probably be replaced with a device tree overlay
     for (unsigned int i = 0; i < channels * 2; i++) {
         struct stat s;
@@ -46,6 +47,7 @@ Cape::Cape() : gains(channels, dB_0) {
         writeGain(i, dB_0);
     }
 
+    // Setup memory
     if ((memory_fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) {
         throw std::runtime_error("Failed to open memory! Are you root?");
     }
@@ -55,9 +57,26 @@ Cape::Cape() : gains(channels, dB_0) {
     if (buffer_base == (void *) -1 || buffer_number_base == (void *) -1) {
         throw std::runtime_error("Failed to map base address");
     }
+
+    // Set up interrupts
+    tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
+
+    prussdrv_init();
+    if (prussdrv_open(PRU_EVTOUT_0)){
+        throw std::runtime_error("Failed to open the PRU-ICSS, have you loaded the overlay?");
+    }
+
+    prussdrv_pruintc_init(&pruss_intc_initdata);
+
+    /* Load and execute PRU firmware */
+    prussdrv_exec_program (PRU_NUM, "./bin/pru/adc-cape.out");
+
 }
 
 Cape::~Cape() {
+    prussdrv_pru_disable(PRU_NUM);
+    prussdrv_exit ();
+
     munmap((void *) buffer_number_base, 4);
     munmap((void *) buffer_base, map_size);
     close(memory_fd);
@@ -82,6 +101,10 @@ void Cape::writeGain(unsigned int channel, Gain gain) {
     const std::array<std::string, 2> values = { "0", "1" };
     writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2] + "/value", values[gain & 1]);
     writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2 + 1] + "/value", values[(gain & 2) >> 1]);
+}
+
+unsigned int Cape::waitEvent(unsigned int hostInterrupt) {
+    return prussdrv_pru_wait_event(PRU_EVTOUT_0);
 }
 
 }

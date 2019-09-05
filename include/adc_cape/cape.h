@@ -78,12 +78,13 @@ class Cape {
     
   private:
     template <typename format>
-    void read_into(std::vector<std::vector<typename format::backing_type>>& data,
+    void readInto(std::vector<std::vector<typename format::backing_type>>& data,
             uint32_t buffer_number,
             unsigned int startSample,
             unsigned int samples);
 
     void writeGain(unsigned int channel, Gain gain);
+    unsigned int waitEvent(unsigned int hostInterrupt);
 
     int memory_fd;
     volatile void* buffer_base;
@@ -99,8 +100,6 @@ void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
 
     while (true) {
         uint32_t buffer_number = *buffer_number_pru;
-        std::cout << "Buffer number: " << buffer_number << std::endl;
-        continue;
 
         if (last_buffer != buffer_number) {
 #ifdef DEBUG
@@ -112,7 +111,7 @@ void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
 
             std::vector<std::vector<typename format::backing_type>>
                     data(channels, std::vector<typename format::backing_type>(pru_buffer_capacity));
-            read_into<format>(data, buffer_number, 0, pru_buffer_capacity);
+            readInto<format>(data, buffer_number, 0, pru_buffer_capacity);
 
             Buffer<format> buffer { data };
             callback(buffer);
@@ -130,20 +129,20 @@ Buffer<format> Cape::capture(unsigned int samples) {
     uint32_t last_buffer = 0;
 
     while (samples_captured < samples) {
+        int buffers = waitEvent(10); // Random number so it compiles
+
         uint32_t buffer_number = *buffer_number_pru;
-        if (last_buffer != buffer_number) {
 #ifdef DEBUG
-            if (buffer_number != last_buffer + 1 && last_buffer != 0) {
-                std::cout << "Buffer dropped. Amt: " << buffer_number - last_buffer - 1 << std::endl;
-            }
-#endif
-            last_buffer = buffer_number;
-
-            int read_size = std::min(pru_buffer_capacity, samples - samples_captured);
-            read_into<format>(data, buffer_number, samples_captured, read_size);
-
-            samples_captured += read_size;
+        if (buffers != 1 || buffer_number != last_buffer + 1 && last_buffer != 0) {
+            std::cout << "Buffer dropped. Amt: " << buffer_number - last_buffer - 1 << std::endl;
         }
+#endif
+        last_buffer = buffer_number;
+
+        int read_size = std::min(pru_buffer_capacity, samples - samples_captured);
+        readInto<format>(data, buffer_number, samples_captured, read_size);
+
+        samples_captured += read_size;
     }
 
     return Buffer<format>{ data };
@@ -151,7 +150,7 @@ Buffer<format> Cape::capture(unsigned int samples) {
 
 // Not 100% sure about this abstraction...
 template <typename format>
-void Cape::read_into(std::vector<std::vector<typename format::backing_type>>& data,
+void Cape::readInto(std::vector<std::vector<typename format::backing_type>>& data,
                uint32_t buffer_number,
                unsigned int startSample,
                unsigned int samples){ // Not 100% sure about this abstraction...

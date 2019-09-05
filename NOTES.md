@@ -62,6 +62,16 @@ Each sample is stored as a 32 bit signed integer. This could later be changed to
 Data is placed in the buffer this way to reduce the amount of work needed to be done by the CPU. There's extra
 time between each transmission from the ADC that the PRU can do a little more work putting things in the right place.
 
+## Beaglebone setup notes
+
+Disable HDMI overlay
+
+am335x_pru_package must be installed. Make sure to install the libraries in `/home/debian/am335x_pru_package/pru_sw/app_loader/lib/`
+
+If copying to /usr/lib, then also run `ldconfig -n -v /usr/lib`
+
+Enable UIO overlay in `/boot/uEnv.txt`
+
 ## Logistics
 ### Editors.
 I found the [Cloud9](http://beaglebone.local:3000/ide.html) editor to be somewhat clunky. There's no auto-save,
