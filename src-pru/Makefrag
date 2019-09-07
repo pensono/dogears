@@ -41,7 +41,7 @@ pru-start:
 	@echo "-    Starting PRU $(PRUN)"
 	@sudo sh -c "echo start > $(PRU_DIR)/state" || ((echo Cannot start $(PRUN); false))
 
-pru-install: $(GEN_DIR)/pru/adc-cape.out
+pru-install: $(GEN_DIR)/pru/adc-cape.bin
 	@echo '-    Copying firmware file $(GEN_DIR)/pru/adc-cape.out to /lib/firmware/am335x-pru$(PRUN)-fw'
 	@sudo cp $(GEN_DIR)/pru/adc-cape.out /lib/firmware/am335x-pru$(PRUN)-fw
 	
@@ -54,10 +54,15 @@ pru-configPins:
 	@config-pin P8_12 pruout # DEBUG
 	@config-pin P8_16 pruin # DEBUG
 
-$(GEN_DIR)/pru/adc-cape.out: $(GEN_DIR)/pru/adc-cape.obj $(GEN_DIR)/pru/main.obj
+$(GEN_DIR)/pru/adc-cape.elf: $(GEN_DIR)/pru/adc-cape.obj $(GEN_DIR)/pru/main.obj
 	@mkdir -p $(GEN_DIR)/pru
 	@echo 'LD	$@ <= $^'
 	@lnkpru -i$(PRU_CGT)/lib -i$(PRU_CGT)/include $(PRU_LFLAGS) -o $@ $^ $(LINKER_COMMAND_FILE) --library=libc.a $(LIBS) $^
+
+$(GEN_DIR)/pru/code.bin $(GEN_DIR)/pru/data.bin: src-pru/bin.cmd $(GEN_DIR)/pru/adc-cape.elf
+	@echo 'HEX	$(GEN_DIR)/pru/adc-cape-code.bin <= $^'
+	@echo 'HEX	$(GEN_DIR)/pru/adc-cape-code.bin <= $^'
+	@hexpru $^ --quiet
 
 $(GEN_DIR)/pru/main.obj: src-pru/main.c
 	@echo 'CC	$@ <= $^'

@@ -4,7 +4,7 @@ CC:=g++
 SRCS=$(wildcard src-cpp/*.cpp)
 OBJS=$(SRCS:src-cpp/%.cpp=$(GEN_DIR)/cpp/%.o)
 
-$(GEN_DIR)/libadc-cape.a: $(OBJS)
+$(GEN_DIR)/libadc-cape.a: $(OBJS) $(GEN_DIR)/pru/code.bin
 	@echo 'AR	$@ <= $^'
 	@ar rcs $@ $^
 	

@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <prussdrv.h>
-#include <pruss_intc_mapping.h>
 #include "adc_cape/cape.h"
 #include "adc_cape/format.h"
 
@@ -61,16 +60,22 @@ Cape::Cape() : gains(channels, dB_0) {
     // Set up interrupts
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
 
-    prussdrv_init();
+    if (prussdrv_init()) {
+        throw std::runtime_error("Failed to init prussdrv");
+    }
+
     if (prussdrv_open(PRU_EVTOUT_0)){
         throw std::runtime_error("Failed to open the PRU-ICSS, have you loaded the overlay?");
     }
 
-    prussdrv_pruintc_init(&pruss_intc_initdata);
+    if (prussdrv_pruintc_init(&pruss_intc_initdata)) {
+        throw std::runtime_error("Failed to init pru interrupts");
+    }
 
-    /* Load and execute PRU firmware */
-    prussdrv_exec_program (PRU_NUM, "./bin/pru/adc-cape.out");
-
+    if (int err = prussdrv_exec_program(PRU_NUM, "./bin/pru/code.bin")) {
+        throw std::runtime_error("Failed to load pru firmware. Code: " + std::to_string(err));
+    }
+    std::cout << "PRU ready" << std::endl;
 }
 
 Cape::~Cape() {
@@ -102,9 +107,4 @@ void Cape::writeGain(unsigned int channel, Gain gain) {
     writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2] + "/value", values[gain & 1]);
     writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2 + 1] + "/value", values[(gain & 2) >> 1]);
 }
-
-unsigned int Cape::waitEvent(unsigned int hostInterrupt) {
-    return prussdrv_pru_wait_event(PRU_EVTOUT_0);
-}
-
 }

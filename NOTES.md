@@ -62,6 +62,10 @@ Each sample is stored as a 32 bit signed integer. This could later be changed to
 Data is placed in the buffer this way to reduce the amount of work needed to be done by the CPU. There's extra
 time between each transmission from the ADC that the PRU can do a little more work putting things in the right place.
 
+## Beaglebone Setup
+
+Enabling drivers: http://catch22.eu/beaglebone/beaglebone-pru-uio/
+
 ## Beaglebone setup notes
 
 Disable HDMI overlay
@@ -108,3 +112,11 @@ CLion, by going to `Tools > Start SSH Session...`. You might want to set the enc
  `Tools > SSH Terminal > Default Encoding`. 
 
 [IntelliJ Reference](https://www.jetbrains.com/help/idea/uploading-and-downloading-files.html#automaticUploadOnUpdate)
+
+## Useful resources
+
+[Sharing PRU memory](http://catch22.eu/beaglebone/beaglebone-pru-ipc/)
+
+### PRU Toolchain
+[Basic PRU Build Steps](http://catch22.eu/beaglebone/beaglebone-pru-ipc/)
+[Hexpru](http://downloads.ti.com/docs/esd/SPRUHV6/invoking-the-hex-conversion-utility-with-a-command-file-stdz079298.html)

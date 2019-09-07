@@ -1,6 +1,8 @@
 #pragma once
 #include <functional>
 #include <algorithm>
+#include <prussdrv.h>
+#include <pruss_intc_mapping.h>
 #include "adc_cape/buffer.h"
 #include "adc_cape/format.h"
 
@@ -84,7 +86,6 @@ class Cape {
             unsigned int samples);
 
     void writeGain(unsigned int channel, Gain gain);
-    unsigned int waitEvent(unsigned int hostInterrupt);
 
     int memory_fd;
     volatile void* buffer_base;
@@ -95,27 +96,30 @@ class Cape {
 
 template<typename format>
 void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
-    volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
-    uint32_t last_buffer = 0;
+//    while(true) {
+//        volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
+//        std::cout << buffer_number_pru << std::endl;
+//    }
+
 
     while (true) {
-        uint32_t buffer_number = *buffer_number_pru;
+        std::vector<std::vector<typename format::backing_type>>
+                data(channels, std::vector<typename format::backing_type>(pru_buffer_capacity));
 
-        if (last_buffer != buffer_number) {
+        std::cout << "waiting..." << std::endl;
+        int buffers = prussdrv_pru_wait_event(PRU_EVTOUT_0);
+        std::cout << "interrupt" << std::endl;
+
 #ifdef DEBUG
-            if (buffer_number != last_buffer + 1 && last_buffer != 0) {
-                std::cout << "Buffer dropped. Amt: " << buffer_number - last_buffer - 1 << std::endl;
+            if (buffers > 1) {
+                std::cout << "Buffer dropped. Amt: " << buffers - 1 << std::endl;
             }
 #endif
-            last_buffer = buffer_number;
+        readInto<format>(data, 0, 0, pru_buffer_capacity);
+        prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 
-            std::vector<std::vector<typename format::backing_type>>
-                    data(channels, std::vector<typename format::backing_type>(pru_buffer_capacity));
-            readInto<format>(data, buffer_number, 0, pru_buffer_capacity);
-
-            Buffer<format> buffer { data };
-            callback(buffer);
-        }
+        Buffer<format> buffer { data };
+        callback(buffer);
     }
 }
 
@@ -129,8 +133,6 @@ Buffer<format> Cape::capture(unsigned int samples) {
     uint32_t last_buffer = 0;
 
     while (samples_captured < samples) {
-        int buffers = waitEvent(10); // Random number so it compiles
-
         uint32_t buffer_number = *buffer_number_pru;
 #ifdef DEBUG
         if (buffers != 1 || buffer_number != last_buffer + 1 && last_buffer != 0) {
