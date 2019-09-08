@@ -7,15 +7,19 @@
   .asg  3,  PRU_EVTOUT_0        ; the event number that is sent back
   
  ; Pin mappings. tX maps to PRU0_X
-  .asg "r31.t1", DRDY ; Pin P9_ 29 ; Make sure to change the WBC instructions
+  .asg "r31.t14", DRDY ; Pin P8_16
+  .asg 14, DRDY_BIT
   .asg "r30.t0", SCLK ; Pin P9_31
+  .asg 0, SCLK_BIT
   .asg "r31.t2", MISO ; Pin P9_30
-  .asg "r30.t3", SYNC ; Pin P9_28
-  .asg "r30.t14", DEBUG ; Pin P8_11
+  .asg 2, MISO_BIT
+  .asg "r30.t14", SYNC ; Pin P8_12
+  .asg 14, SYNC_BIT
+  .asg "r30.t5", DBUG ; Pin P9_27
+  .asg 5, DBUG_BIT
 
 ; Constants
   .asg "r25", INTERRUPT_SIGNAL
-  .asg "r26", DEBUG_BIT
   .asg "r27", C_1024
   .asg "r28", C_2048
   .asg "r29", C_3072
@@ -45,38 +49,23 @@ read_channel .macro out_reg
    NOP
    NOP
    NOP ; Bonus
-   SET r30, r30, 0 ; Clock high
-   AND r7, r31, 1<<2 ; Read in/mask our bit to the right
-   LSR r7, r7, 2 ; Shift temp reg back
+   SET r30, r30, SCLK_BIT ; Clock high
+   AND r7, r31, 1<<MISO_BIT ; Read in/mask our bit to the right
+   LSR r7, r7, MISO_BIT ; Shift temp reg back
    OR out_reg, out_reg, r7 ; Copy into buffer
    NOP
    NOP
    NOP
-   CLR r30, r30, 0 ; Clock low
+   CLR r30, r30, SCLK_BIT ; Clock low
    ; Must read one bit every 7 cycles
 READ_CHANNEL_END?:
    .endm
 
-
-INTERRPUT_TEST:
-   SUB r4, r4, 1
-   QBNE INTERRPUT_TEST, r4, 0
-   MOV R31.b0, INTERRUPT_SIGNAL
-   LDI32 r4, 10000
-   ADD BUFFER_NUMBER, BUFFER_NUMBER, 1
-   SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
-   QBA INTERRPUT_TEST
-
-; Using register 0 for all temporary storage (reused multiple times)
 START:
-   LDI32 DEBUG_BIT, 1 << 14
-   SET r30, r30, 14 ; Debug pulse
-   XOR r30, r30, DEBUG_BIT ; Debug pulse
-   XOR r30, r30, DEBUG_BIT ; Debug pulse
-
    ; Init pins
-   SET r30, r30, 5 ; Sync is normally pulled high
+   SET r30, r30, SYNC_BIT ; Sync is normally pulled high
 
+   ; Init constants
    LDI32 OUTPUT_BUFFER_START, BUFF_LOCATION
    LDI32 INTERRUPT_SIGNAL, PRU0_R31_VEC_VALID | PRU_EVTOUT_0
    LDI32 BUFFER_NUMBER_ADDR, BUFF_NUMBER_LOCATION
@@ -84,17 +73,14 @@ START:
    LDI32 C_2048, 2048
    LDI32 C_3072, 3072
 
+   ; Init state
    LDI32 SAMPLE_OFFEST, 0
    
    LDI32 BUFFER_NUMBER, 137
    SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
 
-   LDI32 r4, 1000
-   LDI32 BUFFER_NUMBER, 137
-   QBA INTERRPUT_TEST
-
    ; Sync pulse
-   CLR r30, r30, 3
+   CLR r30, r30, SYNC_BIT
    NOP
    NOP
    NOP
@@ -103,21 +89,17 @@ START:
    NOP
    NOP
    NOP
-   SET r30, r30, 3
+   SET r30, r30, SYNC_BIT
    
 MAINLOOP:
-   WBS r31, 14
-   SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
-
-   WBC r31, 1 ; Wait for DRDY
+   WBC r31, DRDY_BIT ; Wait for /DRDY
 
    ; The ADC will always send out all four channels based on the board configuration
-   XOR r30, r30, DEBUG_BIT ; Debug pulse
    read_channel r20
    read_channel r21
    read_channel r22
    read_channel r23
-   XOR r30, r30, DEBUG_BIT ; Debug pulse
+   XOR r30, r30, 1 << DBUG_BIT ; Debug pulse
 
    ; There's alot of delay between samples (~6us), so this sassembly code won't be written efficiently
 
@@ -142,6 +124,7 @@ MAINLOOP:
 
    ; Communicate the buffer to the host
    SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
+   MOV R31.b0, INTERRUPT_SIGNAL
    ADD BUFFER_NUMBER, BUFFER_NUMBER, 1
    LDI32 SAMPLE_OFFEST, 0
    QBA MAINLOOP

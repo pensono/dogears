@@ -43,7 +43,7 @@ pru-configPins:
 	@config-pin P9_31 pruout # SCLK
 	@config-pin P9_30 pruin  # MISO
 	@config-pin P8_12 pruout # SYNC
-	@config-pin P8_44 pruout # DBUG
+	@config-pin P9_27 pruout # DBUG
 
 $(GEN_DIR)/pru/adc-cape.elf: $(GEN_DIR)/pru/adc-cape.obj $(GEN_DIR)/pru/main.obj
 	@mkdir -p $(GEN_DIR)/pru
