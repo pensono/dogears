@@ -96,26 +96,21 @@ class Cape {
 
 template<typename format>
 void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
-//    while(true) {
-//        volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
-//        std::cout << buffer_number_pru << std::endl;
-//    }
-
+    volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
 
     while (true) {
         std::vector<std::vector<typename format::backing_type>>
                 data(channels, std::vector<typename format::backing_type>(pru_buffer_capacity));
 
-        std::cout << "waiting..." << std::endl;
         int buffers = prussdrv_pru_wait_event(PRU_EVTOUT_0);
-        std::cout << "interrupt" << std::endl;
+        uint32_t buffer_number = *buffer_number_pru;
 
 #ifdef DEBUG
             if (buffers > 1) {
                 std::cout << "Buffer dropped. Amt: " << buffers - 1 << std::endl;
             }
 #endif
-        readInto<format>(data, 0, 0, pru_buffer_capacity);
+        readInto<format>(data, buffer_number, 0, pru_buffer_capacity);
         prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 
         Buffer<format> buffer { data };

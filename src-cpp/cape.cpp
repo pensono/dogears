@@ -75,7 +75,6 @@ Cape::Cape() : gains(channels, dB_0) {
     if (int err = prussdrv_exec_program(PRU_NUM, "./bin/pru/code.bin")) {
         throw std::runtime_error("Failed to load pru firmware. Code: " + std::to_string(err));
     }
-    std::cout << "PRU ready" << std::endl;
 }
 
 Cape::~Cape() {
