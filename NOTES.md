@@ -117,6 +117,7 @@ CLion, by going to `Tools > Start SSH Session...`. You might want to set the enc
 
 [Sharing PRU memory](http://catch22.eu/beaglebone/beaglebone-pru-ipc/)
 [PRU Device Tree Overlays/U-Boot](https://www.ofitselfso.com/BeagleNotes/Beaglebone_Black_And_Device_Tree_Overlays.php)
+[Template for Python library](https://github.com/beagleboard/am335x_pru_package/blob/master/pru_sw/app_loader/python/prussdrv/clib.py)
 
 ### PRU Toolchain
 [Basic PRU Build Steps](http://catch22.eu/beaglebone/beaglebone-pru-ipc/)

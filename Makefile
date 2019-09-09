@@ -1,5 +1,5 @@
 # --std=c++17 -lstdc++fs needed for <filesystem>
-CFLAGS:=-c -Wall -O3 -Iinclude -I -DDEBUG -g --std=c++17 -lstdc++fs -I/home/debian/am335x_pru_package/pru_sw/app_loader/include -lprussdrv
+CFLAGS:=-c -Wall -O3 -Iinclude -DDEBUG -g --std=c++17 -lstdc++fs -I/home/debian/am335x_pru_package/pru_sw/app_loader/include -lprussdrv
 LFLAGS:=-lprussdrv
 
 GEN_DIR:=bin

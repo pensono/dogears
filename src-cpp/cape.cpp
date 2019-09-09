@@ -79,7 +79,7 @@ Cape::Cape() : gains(channels, dB_0) {
 
 Cape::~Cape() {
     prussdrv_pru_disable(PRU_NUM);
-    prussdrv_exit ();
+    prussdrv_exit();
 
     munmap((void *) buffer_number_base, 4);
     munmap((void *) buffer_base, map_size);

@@ -97,24 +97,27 @@ class Cape {
 template<typename format>
 void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
     volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
+    int last_buffer_number = -1;
 
     while (true) {
         std::vector<std::vector<typename format::backing_type>>
                 data(channels, std::vector<typename format::backing_type>(pru_buffer_capacity));
 
-        int buffers = prussdrv_pru_wait_event(PRU_EVTOUT_0);
-        uint32_t buffer_number = *buffer_number_pru;
+        int buffer_number = prussdrv_pru_wait_event(PRU_EVTOUT_0);
 
-#ifdef DEBUG
-            if (buffers > 1) {
-                std::cout << "Buffer dropped. Amt: " << buffers - 1 << std::endl;
-            }
-#endif
         readInto<format>(data, buffer_number, 0, pru_buffer_capacity);
-        prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+        prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 
         Buffer<format> buffer { data };
         callback(buffer);
+
+        // Get ready for next time
+#ifdef DEBUG
+        if (buffer_number - last_buffer_number > 1 && last_buffer_number != -1) {
+            std::cout << "Buffer dropped. Dropped buffers: " << buffer_number - last_buffer_number - 1 << std::endl;
+        }
+#endif
+        last_buffer_number = buffer_number;
     }
 }
 
@@ -123,22 +126,24 @@ Buffer<format> Cape::capture(unsigned int samples) {
     std::vector<std::vector<typename format::backing_type>>
         data(channels, std::vector<typename format::backing_type>(samples));
     unsigned int samples_captured = 0;
+    int last_buffer_number = -1;
 
     volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
-    uint32_t last_buffer = 0;
 
     while (samples_captured < samples) {
-        uint32_t buffer_number = *buffer_number_pru;
-#ifdef DEBUG
-        if (buffers != 1 || buffer_number != last_buffer + 1 && last_buffer != 0) {
-            std::cout << "Buffer dropped. Amt: " << buffer_number - last_buffer - 1 << std::endl;
-        }
-#endif
-        last_buffer = buffer_number;
+        int buffer_number = prussdrv_pru_wait_event(PRU_EVTOUT_0);
 
         int read_size = std::min(pru_buffer_capacity, samples - samples_captured);
         readInto<format>(data, buffer_number, samples_captured, read_size);
+        prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 
+        // Get ready for next time
+#ifdef DEBUG
+        if (buffer_number - last_buffer_number > 1 && last_buffer_number != -1) {
+            std::cout << "Buffer dropped. Dropped buffers: " << buffer_number - last_buffer_number - 1 << std::endl;
+        }
+#endif
+        last_buffer_number = buffer_number;
         samples_captured += read_size;
     }
 
