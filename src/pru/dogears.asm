@@ -53,32 +53,36 @@ read_channel .macro out_reg
    NOP
    NOP
    NOP
-   NOP
-   SET r30, r30, SCLK_BIT ; Clock high
-   AND r7, r31, 1<<MISO_BIT ; Read in/mask our bit to the right
-   LSR r7, r7, MISO_BIT ; Shift temp reg back
+   NOP ; Bonus
+   SET r30, r30, 0 ; Clock high
+   AND r7, r31, 1<<2 ; Read in/mask our bit to the right
+   LSR r7, r7, 2 ; Shift temp reg back
    OR out_reg, out_reg, r7 ; Copy into buffer
    NOP
    NOP
    NOP
-   CLR r30, r30, SCLK_BIT ; Clock low
-   ; Must read one bit every 11 cycles
+   CLR r30, r30, 0 ; Clock low
+   ; Must read one bit every 7 cycles
 READ_CHANNEL_END?:
    .endm
 
 read_channel_fsync .macro out_reg
-  LOOP READ_CHANNEL_END?, BITS_PER_CHANNEL
-  LSL out_reg, out_reg, 1 ; Shift
-  NOP ; Bonus
-  NOP
-  NOP
-  NOP
-  SET r30, r30, SCLK_BIT
-  AND r7, r31, 1<<MISO_BIT ; Read in/mask our bit to the right
-  LSR r7, r7, MISO_BIT ; Shift temp reg back
-  OR out_reg, out_reg, r7 ; Copy into buffer
-  LDI32 r30, 1 << SYNC_BIT ; Clock low. Write the whole register to also clear DRDY
-  ; Must read one bit every 7 cycles
+   LOOP READ_CHANNEL_END?, BITS_PER_CHANNEL
+   LSL out_reg, out_reg, 1 ; Shift
+   NOP
+   NOP
+   NOP
+   NOP
+   NOP
+   SET r30, r30, SCLK_BIT ; Clock high
+   NOP
+   NOP
+   NOP
+   AND r7, r31, 1<<MISO_BIT ; Read in/mask our bit to the right
+   LSR r7, r7, MISO_BIT ; Shift temp reg back
+   OR out_reg, out_reg, r7 ; Copy into buffer
+   LDI32 r30, 1 << SYNC_BIT ; Clock low. Write the whole register to also clear DRDY
+   ; Must read one bit every 11 cycles
 READ_CHANNEL_END?:
   .endm
 
