@@ -16,7 +16,7 @@ namespace dogears {
  *   something like float or int.
  * max/min:
  *   The maximum and minimum possible values. If the ADC is saturated positively
- *   or negatively, the corresponding value should be produced.
+ *   or negatively, the corresponding value is be produced.
  * zero:
  *   The zero value. This should be read if the input to the ADC is connected to
  *   ground, and the ADC has been calibrated.

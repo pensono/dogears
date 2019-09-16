@@ -101,10 +101,8 @@ START:
    ; Init state
    LDI32 SAMPLE_OFFEST, 0
 
-   ; Must be one. This should also increment every time an interrupt is called
-   ; so BUFFER_NUMBER is always equal to the number of interrupts made during the execution
-   LDI32 BUFFER_NUMBER, 1
-   ;SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
+   LDI32 BUFFER_NUMBER, 0
+   SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
 
    ; Sync pulse
    CLR r30, r30, SYNC_BIT
@@ -127,7 +125,6 @@ INNER_TEST_LOOP:
    SUB r7, r7, 1
    QBNE INNER_TEST_LOOP, r7, 0
    QBA TEST_LOOP
-
 
 
 MAINLOOP_FSYNC:
@@ -245,7 +242,7 @@ MAINLOOP_SPI:
    QBNE MAINLOOP_SPI, SAMPLE_OFFEST, C_1024
 
    ; Communicate the buffer to the host
-   ;SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
+   SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
    MOV R31.b0, INTERRUPT_SIGNAL
    ADD BUFFER_NUMBER, BUFFER_NUMBER, 1
    LDI32 SAMPLE_OFFEST, 0
