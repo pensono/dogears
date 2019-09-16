@@ -2,9 +2,9 @@
 
 #include <vector>
 #include <assert.h>
-#include "adc_cape/format.h"
+#include "dogears/format.h"
 
-namespace adc {
+namespace dogears {
 
 // A data structure which allows data from all channels to be grouped together
 // easily.

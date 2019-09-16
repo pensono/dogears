@@ -4,19 +4,19 @@
 #include <cstdint>
 #include <climits>
 #include <arpa/inet.h>
-#include "adc_cape/cape.h"
-#include "adc_cape/buffer.h"
+#include "dogears/dogears.h"
+#include "dogears/buffer.h"
 
-void write_wav(std::ofstream& f, const adc::Buffer<adc::Raw>& data);
+void write_wav(std::ofstream& f, const dogears::Buffer<dogears::Raw>& data);
 void write_int16(std::ofstream& f, uint16_t data);
 void write_int24(std::ofstream& f, uint32_t data);
 void write_int32(std::ofstream& f, uint32_t data);
 void write_float32(std::ofstream& f, float data);
 
 int main(int argc, char* argv[]) {
-    adc::Cape cape;
+    dogears::DogEars cape;
     
-    if (argc != 3 && argc != 3 + adc::channels) {
+    if (argc != 3 && argc != 3 + dogears::channels) {
         std::cout << "Usage:" << std::endl;
         std::cout << "  " << argv[0] << " samples output_file [gain gain gain gain]" << std::endl;
         std::cout << "Example:" << std::endl;
@@ -26,14 +26,14 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    if (argc == 3 + adc::channels) {
-        for (unsigned int i = 0; i < adc::channels; i++) {
+    if (argc == 3 + dogears::channels) {
+        for (unsigned int i = 0; i < dogears::channels; i++) {
             int value = std::stoi(argv[3 + i]);
             switch (value) {
-                case 0: cape.setGain(i, adc::Gain::dB_0); break;
-                case 10: cape.setGain(i, adc::Gain::dB_10); break;
-                case 20: cape.setGain(i, adc::Gain::dB_20); break;
-                case 30: cape.setGain(i, adc::Gain::dB_30); break;
+                case 0: cape.setGain(i, dogears::Gain::dB_0); break;
+                case 10: cape.setGain(i, dogears::Gain::dB_10); break;
+                case 20: cape.setGain(i, dogears::Gain::dB_20); break;
+                case 30: cape.setGain(i, dogears::Gain::dB_30); break;
                 default:
                     std::cout << "Bad value for gain: " << argv[3 + i] << std::endl;
                     std::cout << "Must be 0, 10, 20, or 30" << std::endl;
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     unsigned int samples = std::stoi(argv[1]);
     
     std::cout << "Capturing..." << std::endl;
-    adc::Buffer<adc::Raw> data = cape.capture<adc::Raw>(samples);
+    dogears::Buffer<dogears::Raw> data = cape.capture<dogears::Raw>(samples);
     std::ofstream output (argv[2], std::ios::binary);
 
     std::cout << "Writing to " << argv[2] << std::endl;
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     exit(0);
 }
 
-void write_wav(std::ofstream& f, const adc::Buffer<adc::Raw>& data) {
+void write_wav(std::ofstream& f, const dogears::Buffer<dogears::Raw>& data) {
     // http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html (PCM Data section)
 
 #if CHAR_BIT != 8
@@ -75,8 +75,8 @@ void write_wav(std::ofstream& f, const adc::Buffer<adc::Raw>& data) {
     write_int32(f, fmt_chunk_size); // fmt chunk size
     write_int16(f, 0x0001); // Integer PCM
     write_int16(f, data.channels());
-    write_int32(f, adc::sample_rate);
-    write_int32(f, adc::sample_rate * sample_size_bytes * data.channels()); // Data rate
+    write_int32(f, dogears::sample_rate);
+    write_int32(f, dogears::sample_rate * sample_size_bytes * data.channels()); // Data rate
     write_int16(f, sample_size_bytes * data.channels()); // Block size, one per timestep
     write_int16(f, sample_size_bytes * CHAR_BIT); // Sample size
     

@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
-#include "adc_cape/buffer.h"
-#include "adc_cape/format.h"
+#include "dogears/buffer.h"
+#include "dogears/format.h"
 
-namespace adc {
+namespace dogears {
   
 // In samples, per channel
 static constexpr unsigned int pru_buffer_capacity = 256;
@@ -25,10 +25,10 @@ enum Gain {
 /**
    Only one data acquisition method should be used at a time.
  */
-class Cape {
+class DogEars {
   public:
-    Cape();
-    virtual ~Cape();
+    DogEars();
+    virtual ~DogEars();
     
     /**
       Begins asynchronously streaming data to a callback
@@ -95,7 +95,7 @@ class Cape {
 };
 
 template<typename format>
-void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
+void DogEars::beginStream(std::function<void(Buffer<format>)> callback) {
     volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
     int last_buffer_number = -1;
 
@@ -122,7 +122,7 @@ void Cape::beginStream(std::function<void(Buffer<format>)> callback) {
 }
 
 template<typename format>
-Buffer<format> Cape::capture(unsigned int samples) {
+Buffer<format> DogEars::capture(unsigned int samples) {
     std::vector<std::vector<typename format::backing_type>>
         data(channels, std::vector<typename format::backing_type>(samples));
     unsigned int samples_captured = 0;
@@ -152,10 +152,11 @@ Buffer<format> Cape::capture(unsigned int samples) {
 
 // Not 100% sure about this abstraction...
 template <typename format>
-void Cape::readInto(std::vector<std::vector<typename format::backing_type>>& data,
-               uint32_t buffer_number,
-               unsigned int startSample,
-               unsigned int samples){ // Not 100% sure about this abstraction...
+void DogEars::readInto(
+                std::vector<std::vector<typename format::backing_type>>& data,
+                uint32_t buffer_number,
+                unsigned int startSample,
+                unsigned int samples) { // Not 100% sure about this abstraction...
     // Assume that data has `channels` elements
 
     int buffer_offset = (buffer_number & 1) ? pru_buffer_capacity * channels : 0;

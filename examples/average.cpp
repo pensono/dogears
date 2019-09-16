@@ -2,27 +2,27 @@
 #include <numeric>
 #include <vector>
 #include <iomanip>      // std::setprecision
-#include "adc_cape/cape.h"
-#include "adc_cape/buffer.h"
+#include "dogears/dogears.h"
+#include "dogears/buffer.h"
 
-void averageAndPrint(adc::Buffer<adc::Normalized> buffer);
-void averageAndPrintIndexes(adc::Buffer<adc::Normalized> buffer);
+void averageAndPrint(dogears::Buffer<dogears::Normalized> buffer);
+void averageAndPrintIndexes(dogears::Buffer<dogears::Normalized> buffer);
 
 int main(int argc, char* argv[]) {
-    adc::Cape cape;
+    dogears::DogEars cape;
     
     std::cout << "Beginning stream..." << std::endl;
     std::cout << std::fixed;
     std::cout << std::setprecision(6); // Consistently sized outputs
 
-    cape.beginStream<adc::Normalized>(averageAndPrint);
+    cape.beginStream<dogears::Normalized>(averageAndPrint);
     
     // Streaming happens asynchronously
     system("pause");
     exit(0);
 }
 
-void averageAndPrint(adc::Buffer<adc::Normalized> buffer) {
+void averageAndPrint(dogears::Buffer<dogears::Normalized> buffer) {
     for (auto channelData : buffer) {
         float sum = std::accumulate(channelData.begin(), channelData.end(), 0.0f, std::plus<float>());
         std::cout << sum / channelData.size() << "\t";
@@ -32,7 +32,7 @@ void averageAndPrint(adc::Buffer<adc::Normalized> buffer) {
 
 
 // Same thing as averageAndPrint, but using fewer modern C++ features
-void averageAndPrintIndexes(adc::Buffer<adc::Normalized> buffer) {
+void averageAndPrintIndexes(dogears::Buffer<dogears::Normalized> buffer) {
     for (unsigned int channelNum = 0; channelNum < buffer.channels(); channelNum++) {
         float sum = 0.0f;
         std::vector<float> channelData = buffer.channel(channelNum);

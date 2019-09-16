@@ -33,7 +33,6 @@
   .asg "r6", BUFFER_NUMBER_ADDR
   .asg "r5", BUFFER_NUMBER
 
-  
   .asg 24, BITS_PER_CHANNEL
   .asg 4, CHANNELS
   .asg 4, SAMPLE_SIZE_BYTES
@@ -54,7 +53,7 @@ read_channel .macro out_reg
    NOP
    NOP
    NOP
-   NOP ; Bonus
+   NOP
    SET r30, r30, SCLK_BIT ; Clock high
    AND r7, r31, 1<<MISO_BIT ; Read in/mask our bit to the right
    LSR r7, r7, MISO_BIT ; Shift temp reg back
@@ -63,7 +62,7 @@ read_channel .macro out_reg
    NOP
    NOP
    CLR r30, r30, SCLK_BIT ; Clock low
-   ; Must read one bit every 7 cycles
+   ; Must read one bit every 11 cycles
 READ_CHANNEL_END?:
    .endm
 
@@ -170,13 +169,10 @@ MAINLOOP_FSYNC:
    NOP
    QBNE WAIT, SAMPLE_OFFEST, C_1024
 
-   ; Communicate the buffer to the host
-   ;SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
    SET r30, r30, SCLK_BIT
    MOV R31.b0, INTERRUPT_SIGNAL
    ADD BUFFER_NUMBER, BUFFER_NUMBER, 1
    LDI32 SAMPLE_OFFEST, 0
-   NOP
 
    LDI32 r7, WAIT_SCLK_CYCLES
 WAIT_LOOP:
@@ -189,7 +185,7 @@ WAIT_LOOP:
    NOP
    NOP
    NOP
-   ; Skip one instruction cycle to trim the overall frequency.
+   ; NOP ; Skip one instruction cycle to trim the overall frequency.
    ; Should be exctly 6.945ns overall. Target frequency is 6.9444444ns
    QBNE WAIT_LOOP, r7, 0
    CLR r30, r30, SCLK_BIT
@@ -209,7 +205,6 @@ WAIT:
    NOP
    NOP
    NOP
-   ; NOP Skip this instruction to nudge the overall frequency
    LDI32 r7, WAIT_SCLK_CYCLES
    QBA WAIT_LOOP
 

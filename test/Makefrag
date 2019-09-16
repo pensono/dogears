@@ -10,9 +10,9 @@ run-%: $(GEN_DIR)/test/%
 	@echo "TEST	$(@:run-%=%)"
 	-@$(GEN_DIR)/test/$(@:run-%=%)
 
-$(GEN_DIR)/test/%: $(GEN_DIR)/test/%.o $(GEN_DIR)/libadc-cape.a
+$(GEN_DIR)/test/%: $(GEN_DIR)/test/%.o $(GEN_DIR)/libdogears.a
 	@echo 'LD	$@ $^'
-	@$(CC) $(LFLAGS) -o $@ $^  -Lbin -ladc-cape
+	@$(CC) $(LFLAGS) -o $@ $^  -Lbin -ldogears
 
 $(GEN_DIR)/test/%.o: test/%.cpp
 	@mkdir -p $(GEN_DIR)/test

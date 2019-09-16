@@ -1,9 +1,9 @@
 #include <string>
 #include <iostream>
 #include <limits>
-#include "adc_cape/format.h"
+#include "dogears/format.h"
 
-using namespace adc;
+using namespace dogears;
 
 template<typename T>
 bool assert_eq(T observed, T expected, std::string errorMessage) {

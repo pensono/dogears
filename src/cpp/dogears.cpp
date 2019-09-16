@@ -6,10 +6,10 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <prussdrv.h>
-#include "adc_cape/cape.h"
-#include "adc_cape/format.h"
+#include "dogears/dogears.h"
+#include "dogears/format.h"
 
-namespace adc {
+namespace dogears {
 
 static constexpr int PRU_NUM = 0;
 static constexpr int pru0_memory_start = 0x4a300000;
@@ -31,7 +31,7 @@ void writeFile(const std::string filename, const std::string contents) {
     out.close();
 }
 
-Cape::Cape() : gains(channels, dB_0) {
+DogEars::DogEars() : gains(channels, dB_0) {
     // Setup GPIO pins/gains
     // All this business with configuring the pins over the FS can probably be replaced with a device tree overlay
     for (unsigned int i = 0; i < channels * 2; i++) {
@@ -77,7 +77,7 @@ Cape::Cape() : gains(channels, dB_0) {
     }
 }
 
-Cape::~Cape() {
+DogEars::~DogEars() {
     prussdrv_pru_disable(PRU_NUM);
     prussdrv_exit();
 
@@ -86,7 +86,7 @@ Cape::~Cape() {
     close(memory_fd);
 }
 
-void Cape::setGain(unsigned int channel, Gain gain) {
+void DogEars::setGain(unsigned int channel, Gain gain) {
     assert(channel < channels);
 
     if (gains[channel] == gain) {
@@ -96,12 +96,12 @@ void Cape::setGain(unsigned int channel, Gain gain) {
     writeGain(channel, gain);
 }
 
-Gain Cape::getGain(unsigned int channel) {
+Gain DogEars::getGain(unsigned int channel) {
     assert(channel < channels);
     return gains[channel];
 }
 
-void Cape::writeGain(unsigned int channel, Gain gain) {
+void DogEars::writeGain(unsigned int channel, Gain gain) {
     const std::array<std::string, 2> values = { "0", "1" };
     writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2] + "/value", values[gain & 1]);
     writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2 + 1] + "/value", values[(gain & 2) >> 1]);

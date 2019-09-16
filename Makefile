@@ -6,8 +6,8 @@ GEN_DIR:=bin
 
 all: pru-run test_rpmsg
 
-include src-cpp/Makefrag
-include src-pru/Makefrag
+include src/cpp/Makefrag
+include src/pru/Makefrag
 include examples/Makefrag
 include test/Makefrag
 

@@ -11,7 +11,7 @@ PRUN=0
 PRU_CGT:=/usr/share/ti/cgt-pru
 PRU_SUPPORT:=/usr/lib/ti/pru-software-support-package
 
-LINKER_COMMAND_FILE=src-pru/AM335x_PRU.cmd
+LINKER_COMMAND_FILE=src/pru/AM335x_PRU.cmd
 LIBS=--library=$(PRU_SUPPORT)/lib/rpmsg_lib.lib
 INCLUDE=--include_path=$(PRU_SUPPORT)/include --include_path=$(PRU_SUPPORT)/include/am335x
 
@@ -31,11 +31,11 @@ endif
 
 PRU_DIR=$(wildcard /sys/devices/platform/ocp/4a32600*.pruss-soc-bus/4a300000.pruss/$(PRU_ADDR).*/remoteproc/remoteproc*)
 
-pru-run: $(GEN_DIR)/pru/adc-cape.out $(GEN_DIR)/pru/adc-cape-00A0.dtbo pru-stop pru-install pru-start
+pru-run: $(GEN_DIR)/pru/dogears.out $(GEN_DIR)/pru/dogears-00A0.dtbo pru-stop pru-install pru-start
 
-pru-install: $(GEN_DIR)/pru/adc-cape-00A0.dtbo
-	@echo 'CP    /lib/firmware/adc-cape-00A0.dtbo <= $^'
-	@sudo cp $(GEN_DIR)/pru/adc-cape-00A0.dtbo /lib/firmware
+pru-install: $(GEN_DIR)/pru/dogears-00A0.dtbo
+	@echo 'CP    /lib/firmware/dogears-00A0.dtbo <= $^'
+	@sudo cp $(GEN_DIR)/pru/dogears-00A0.dtbo /lib/firmware
 	
 pru-configPins:
 	@echo "-    Configuring pins"
@@ -46,27 +46,27 @@ pru-configPins:
 	@config-pin P8_12 pruout # SYNC
 	@config-pin P9_27 pruout # DBUG
 
-$(GEN_DIR)/pru/adc-cape.elf: $(GEN_DIR)/pru/adc-cape.obj $(GEN_DIR)/pru/main.obj
+$(GEN_DIR)/pru/dogears.elf: $(GEN_DIR)/pru/dogears.obj $(GEN_DIR)/pru/main.obj
 	@mkdir -p $(GEN_DIR)/pru
 	@echo 'LD	$@ <= $^'
 	@lnkpru -i$(PRU_CGT)/lib -i$(PRU_CGT)/include $(PRU_LFLAGS) -o $@ $^ $(LINKER_COMMAND_FILE) --library=libc.a $(LIBS) $^
 
-$(GEN_DIR)/pru/code.bin $(GEN_DIR)/pru/data.bin: src-pru/bin.cmd $(GEN_DIR)/pru/adc-cape.elf
+$(GEN_DIR)/pru/code.bin $(GEN_DIR)/pru/data.bin: src/pru/bin.cmd $(GEN_DIR)/pru/dogears.elf
 	@echo 'HEX	$(GEN_DIR)/pru/code.bin <= $^'
 	@echo 'HEX	$(GEN_DIR)/pru/data.bin <= $^'
 	@hexpru $^ --quiet
 
-$(GEN_DIR)/pru/main.obj: src-pru/main.c
+$(GEN_DIR)/pru/main.obj: src/pru/main.c
 	@echo 'CC	$@ <= $^'
 	@clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(PRU_CFLAGS) -fe $@ $<
 
-$(GEN_DIR)/pru/adc-cape.obj: src-pru/adc-cape.asm src-pru/resource_table.h
+$(GEN_DIR)/pru/dogears.obj: src/pru/dogears.asm src/pru/resource_table.h
 	@mkdir -p $(GEN_DIR)/pru
 	@echo 'CC	$@ <= $^'
 	@clpru --include_path=$(PRU_CGT)/include $(INCLUDE) $(PRU_CFLAGS) -D=PRUN=$(PRUN) -fe $@ $<
 
-$(GEN_DIR)/pru/adc-cape-00A0.dtbo: src-pru/adc-cape.dts
+$(GEN_DIR)/pru/dogears-00A0.dtbo: src/pru/dogears.dts
 	@echo 'DTC	$@ <= $^'
-	@dtc -W no-unit_address_vs_reg -O dtb -o $(GEN_DIR)/pru/adc-cape-00A0.dtbo -b 0 -@ src-pru/adc-cape.dts
+	@dtc -W no-unit_address_vs_reg -O dtb -o $(GEN_DIR)/pru/dogears-00A0.dtbo -b 0 -@ src-pru/dogears.dts
 
 .PHONY: pru-stop pru-start pru-install pru-configPins

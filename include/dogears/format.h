@@ -5,7 +5,7 @@
 // The format abstraction would greatly benefit from C++ Concepts,
 // once they are introduced into the language
 
-namespace adc {
+namespace dogears {
 
 /***
  * Each format has several properties. If you wish to specify your own format,
