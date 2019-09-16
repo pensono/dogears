@@ -26,7 +26,7 @@ static const std::array<std::string, channels * 2> gain_pins = {
 };
 
 // Map refers to both (all) buffers, since the data is double buffered
-static constexpr int map_size = pru_buffer_capacity * channels * buffers * sizeof(uint32_t);
+static constexpr int map_size = pru_buffer_capacity_samples * channels * buffers * sizeof(uint32_t);
 
 void writeFile(const std::string filename, const std::string contents) {
     std::ofstream out(filename);

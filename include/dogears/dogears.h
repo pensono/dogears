@@ -7,13 +7,14 @@
 #include <condition_variable>
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
+#include <pthread.h>
 #include "dogears/buffer.h"
 #include "dogears/format.h"
 
 namespace dogears {
   
 // In samples, per channel
-static constexpr unsigned int pru_buffer_capacity = 256;
+static constexpr unsigned int pru_buffer_capacity_samples = 512;
 static constexpr unsigned int channels = 4;
 static constexpr unsigned int buffers = 2; // double buffered
 static constexpr unsigned int sample_rate_fsync = 144000;
@@ -118,6 +119,10 @@ void DogEars::beginStream(std::function<void(Buffer<format>)> callback) {
     auto ready_signal = std::make_shared<std::condition_variable>();
     std::thread processing_thread(dispatchBuffers<format>, callback, processing_queue, queue_mutex, ready_signal);
 
+    // Make this thread realtime
+    struct sched_param param = { 2 };
+    pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+
     int last_buffer_number = -1;
 
     volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
@@ -126,12 +131,12 @@ void DogEars::beginStream(std::function<void(Buffer<format>)> callback) {
         // Heap allocate the data
         auto data = std::make_shared<std::vector<std::vector<typename format::backing_type>>>(
                 channels,
-                std::vector<typename format::backing_type>(pru_buffer_capacity));
+                std::vector<typename format::backing_type>(pru_buffer_capacity_samples));
 
         prussdrv_pru_wait_event(PRU_EVTOUT_0);
         int buffer_number = *buffer_number_pru;
 
-        readInto<format>(*data, buffer_number, 0, pru_buffer_capacity);
+        readInto<format>(*data, buffer_number, 0, pru_buffer_capacity_samples);
         prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 
         {
@@ -154,7 +159,7 @@ template<typename format>
 Buffer<format> DogEars::capture(unsigned int samples) {
     auto data = std::make_shared<std::vector<std::vector<typename format::backing_type>>>(
             channels,
-            std::vector<typename format::backing_type>(pru_buffer_capacity));
+            std::vector<typename format::backing_type>(pru_buffer_capacity_samples));
     unsigned int samples_captured = 0;
     int last_buffer_number = -1;
 
@@ -164,7 +169,7 @@ Buffer<format> DogEars::capture(unsigned int samples) {
         prussdrv_pru_wait_event(PRU_EVTOUT_0);
         int buffer_number = *buffer_number_pru;
 
-        int read_size = std::min(pru_buffer_capacity, samples - samples_captured);
+        int read_size = std::min(pru_buffer_capacity_samples, samples - samples_captured);
         readInto<format>(*data, buffer_number, samples_captured, read_size);
         prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
         std::cout<<"Got buffer " << buffer_number << std::endl;
@@ -190,13 +195,13 @@ void DogEars::readInto(
                 unsigned int startSample,
                 unsigned int samples) { // Not 100% sure about this abstraction...
     // Assume that data has `channels` elements
-    int buffer_offset = (buffer_number & 1) ? pru_buffer_capacity * channels : 0;
+    int buffer_offset = (buffer_number & 1) ? pru_buffer_capacity_samples * channels : 0;
     uint32_t* buffer_start = &((uint32_t*) buffer_base)[buffer_offset];
 
     for (unsigned int i = 0; i < channels; i++) {
         for (unsigned int j = 0; j < samples; j++) {
             // Convert from 24bit signed
-            data[i][startSample+j] = format::convert(buffer_start[j + pru_buffer_capacity * i]);
+            data[i][startSample+j] = format::convert(buffer_start[j + pru_buffer_capacity_samples * i]);
         }
     }
 }

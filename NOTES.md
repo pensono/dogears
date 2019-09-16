@@ -53,7 +53,7 @@ counter is used to determine which buffer is available.
 
 Data in each buffer is laid out first by channel, and then by sample. The entire PRU0 memory will look as follows:
 ```
-0x0000    0x0400     0x0800     0x0C00     0x1000                                      0x2000
+0x0000    0x0800     0x1000     0x1800     0x2000                                      0x4000
   #-------------------------------------------#-------------------------------------------#
   | CH0 BUF0 | CH1 BUF0 | CH2 BUF0 | CH3 BUF0 | CH0 BUF1 | CH1 BUF1 | CH2 BUF1 | CH3 BUF1 |
   #-------------------------------------------#-------------------------------------------#
