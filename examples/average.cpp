@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     
     std::cout << "Beginning stream..." << std::endl;
     std::cout << std::fixed;
-    std::cout << std::setprecision(6); // Consistently sized outputs
+    std::cout << std::showpos << std::setprecision(6); // Consistently sized outputs
 
     cape.beginStream<dogears::Normalized>(averageAndPrint);
     
@@ -27,7 +27,7 @@ void averageAndPrint(dogears::Buffer<dogears::Normalized> buffer) {
         float sum = std::accumulate(channelData.begin(), channelData.end(), 0.0f, std::plus<float>());
         std::cout << sum / channelData.size() << "\t";
     }
-    std::cout << std::endl;
+    std::cout << "\r"; // Writing this will cause us to overwrite the previous line in the console
 }
 
 
@@ -43,5 +43,5 @@ void averageAndPrintIndexes(dogears::Buffer<dogears::Normalized> buffer) {
         
         std::cout << sum / buffer.samples() << " ";
     }
-    std::cout << std::endl;
+    std::cout << "\r"; // Writing this will cause us to overwrite the previous line in the console
 }
