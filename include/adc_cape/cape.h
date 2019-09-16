@@ -12,7 +12,7 @@ namespace adc {
 static constexpr unsigned int pru_buffer_capacity = 256;
 static constexpr unsigned int channels = 4;
 static constexpr unsigned int buffers = 2; // double buffered
-static constexpr unsigned int sample_rate = 105469;
+static constexpr unsigned int sample_rate = 144000;
 
 enum Gain {
     // Integer values correspond to the pin settings we feed into the analog switch

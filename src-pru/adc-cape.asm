@@ -9,6 +9,8 @@
  ; Pin mappings. tX maps to PRU0_X
   .asg "r31.t14", DRDY ; Pin P8_16
   .asg 14, DRDY_BIT
+  .asg "r31.t15", FSYNC ; Pin P8_11
+  .asg 15, FSYNC_BIT
   .asg "r30.t0", SCLK ; Pin P9_31
   .asg 0, SCLK_BIT
   .asg "r31.t2", MISO ; Pin P9_30
@@ -61,6 +63,22 @@ read_channel .macro out_reg
 READ_CHANNEL_END?:
    .endm
 
+read_channel_fsync .macro out_reg
+  LOOP READ_CHANNEL_END?, BITS_PER_CHANNEL
+  LSL out_reg, out_reg, 1 ; Shift
+  NOP ; Bonus
+  NOP
+  NOP
+  NOP
+  SET r30, r30, SCLK_BIT
+  AND r7, r31, 1<<MISO_BIT ; Read in/mask our bit to the right
+  LSR r7, r7, MISO_BIT ; Shift temp reg back
+  OR out_reg, out_reg, r7 ; Copy into buffer
+  LDI32 r30, 1 << SYNC_BIT ; Clock low. Write the whole register to also clear DRDY
+  ; Must read one bit every 7 cycles
+READ_CHANNEL_END?:
+  .endm
+
 START:
    ; Init pins
    SET r30, r30, SYNC_BIT ; Sync is normally pulled high
@@ -92,8 +110,106 @@ START:
    NOP
    NOP
    SET r30, r30, SYNC_BIT
-   
-MAINLOOP:
+
+   QBA MAINLOOP_FSYNC
+
+TEST_LOOP:
+   XOR r30, r30, 1 << DBUG_BIT ; Debug pulse
+   LDI32 r7, 694-3
+INNER_TEST_LOOP:
+   SUB r7, r7, 1
+   QBNE INNER_TEST_LOOP, r7, 0
+   QBA TEST_LOOP
+
+
+
+MAINLOOP_FSYNC:
+   ; We must continuously run the SCLK line in the FSYNC protocol.
+   ; This is done at an 11 cycle period. 5 cycles off, 6 cycles on
+   ; Sample rate is 144kHz, so we'll read data off every 6930ns, or 126 SCLK periods
+   ; 24bits * 4 channels = 96 SCLK peroids for reading in data
+   ; 30 remaining SCLK periods
+
+   LDI32 r30, 1 << SYNC_BIT | 1 << FSYNC_BIT
+
+   ; The ADC will always send out all four channels based on the board configuration
+   read_channel_fsync r20
+   read_channel_fsync r21
+   read_channel_fsync r22
+   read_channel_fsync r23
+   NOP
+   NOP
+   NOP
+   NOP
+   SET r30, r30, SCLK_BIT
+
+   ; There's alot of delay between samples (~6us), so this sassembly code won't be written efficiently
+
+   AND BUFFER_OFFSET, BUFFER_NUMBER, 1 ; Get the parity
+   LSL BUFFER_OFFSET, BUFFER_OFFSET, 12 ; Make it 0 or 4096
+   ADD BUFFER_OFFSET, BUFFER_OFFSET, SAMPLE_OFFEST
+
+   SBBO &r20, BUFFER_OFFSET, 0,      SAMPLE_SIZE_BYTES
+   CLR r30, r30, SCLK_BIT
+   SBBO &r21, BUFFER_OFFSET, C_1024, SAMPLE_SIZE_BYTES
+   SBBO &r22, BUFFER_OFFSET, C_2048, SAMPLE_SIZE_BYTES
+   SET r30, r30, SCLK_BIT
+   SBBO &r23, BUFFER_OFFSET, C_3072, SAMPLE_SIZE_BYTES
+
+   LDI32 r20, 0 ; Clear the input buffer. Not necessary once everything is 24 bits
+   LDI32 r21, 0
+   CLR r30, r30, SCLK_BIT ; Start of 98th SCLK cycle
+   LDI32 r22, 0
+   LDI32 r23, 0
+
+   ADD SAMPLE_OFFEST, SAMPLE_OFFEST, SAMPLE_SIZE_BYTES
+
+   ; Did we fill either buffer?
+   QBNE WAIT, SAMPLE_OFFEST, C_1024
+
+   ; Communicate the buffer to the host
+   ;SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
+   SET r30, r30, SCLK_BIT
+   MOV R31.b0, INTERRUPT_SIGNAL
+   ADD BUFFER_NUMBER, BUFFER_NUMBER, 1
+   LDI32 SAMPLE_OFFEST, 0
+   NOP
+
+   LDI32 r7, 26
+WAIT_LOOP:
+   CLR r30, r30, SCLK_BIT
+   SUB r7, r7, 1
+   NOP
+   NOP
+   NOP
+   SET r30, r30, SCLK_BIT
+   NOP
+   NOP
+   NOP
+   NOP
+   QBNE WAIT_LOOP, r7, 0
+   CLR r30, r30, SCLK_BIT
+   NOP
+   NOP
+   NOP
+   NOP
+   SET r30, r30, SCLK_BIT
+   NOP
+   NOP
+   NOP
+   NOP
+   QBA MAINLOOP_FSYNC
+
+WAIT:
+   SET r30, r30, SCLK_BIT
+   NOP
+   NOP
+   NOP
+   LDI32 r7, 26
+   QBA WAIT_LOOP
+
+
+MAINLOOP_SPI:
    WBC r31, DRDY_BIT ; Wait for /DRDY
 
    ; The ADC will always send out all four channels based on the board configuration
@@ -122,12 +238,12 @@ MAINLOOP:
    ADD SAMPLE_OFFEST, SAMPLE_OFFEST, SAMPLE_SIZE_BYTES
 
    ; Did we fill either buffer?
-   QBNE MAINLOOP, SAMPLE_OFFEST, C_1024
+   QBNE MAINLOOP_SPI, SAMPLE_OFFEST, C_1024
 
    ; Communicate the buffer to the host
    ;SBBO &BUFFER_NUMBER, BUFFER_NUMBER_ADDR, 0, 4
    MOV R31.b0, INTERRUPT_SIGNAL
    ADD BUFFER_NUMBER, BUFFER_NUMBER, 1
    LDI32 SAMPLE_OFFEST, 0
-   QBA MAINLOOP
+   QBA MAINLOOP_SPI
 

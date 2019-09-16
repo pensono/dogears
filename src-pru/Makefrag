@@ -40,6 +40,7 @@ pru-install: $(GEN_DIR)/pru/adc-cape-00A0.dtbo
 pru-configPins:
 	@echo "-    Configuring pins"
 	@config-pin P8_16 pruin  # DRDY
+	@config-pin P8_11 pruout # FSYNC
 	@config-pin P9_31 pruout # SCLK
 	@config-pin P9_30 pruin  # MISO
 	@config-pin P8_12 pruout # SYNC
