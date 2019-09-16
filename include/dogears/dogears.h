@@ -164,7 +164,7 @@ Buffer<format> DogEars::capture(unsigned int samples) {
     int last_buffer_number = -1;
 
     volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
-    
+
     // Make this thread realtime
     struct sched_param param = { 2 };
     pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);

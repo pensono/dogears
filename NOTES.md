@@ -1,6 +1,6 @@
 # Notes
 This file is intended for maintainers of this project. It contains high level 
-infromation about the project layout as well as some important low level details.
+information about the project layout as well as some important low level details.
 A maintainer should be able to get up to speed by reading this document.
 
 ## Project Structure
@@ -35,15 +35,15 @@ PRU. This is expected since the PRU has not started yet. This may also occur whe
 has errors.
 
 ## Moving data between the PRU and ARM Core
-The PRU stores the samples in memory designated for the PRU0 core. This memory is then mmap'd so that
+The PRU stores the samples in memory designated for the PRU0 and PRU1 cores. This memory is then mmap'd so that
 the arm core may read the data. This memory is split into two buffers for double buffering. Since the
-memory is 8KiB in size, each buffer is 4KiB in length. There 4 channels, and each sample is stored in 
-32 bits, which allows for 256 samples per channel in each of the two buffers.
+memory is 16KiB in size, each buffer is 8KiB in length. There 4 channels, and each sample is stored in 
+32 bits, which allows for 512 samples per channel in each of the two buffers.
 
-PRU0 memory: 8KiB
-Buffer Size: 8KiB / 2 buffers = 4KiB
-Memory per channel: 4Kib / 4 channels = 1KiB
-Samples per channel in each buffer: 1Kib / 4 bytes = 256 samples
+PRU0 memory + PRU1 memory: 16KiB
+Buffer Size: 16KiB / 2 buffers = 8KiB
+Memory per channel: 8Kib / 4 channels = 2KiB
+Samples per channel in each buffer: 2Kib / 4 bytes = 512 samples
 
 Ideally, the PRU signals to the arm core when it has data available. This could potentially be accomplished
 through the RPMsg interface (although it seems quite heavyweight). Until such a solution is implemented, 
@@ -91,7 +91,7 @@ echo "/home/debian/adc-cape 192.168.7.0/255.255.255.252(rw,no_root_squash,subtre
 
 The process of mounting this varies by host. Here's how to do it on linux:
 ```
-mount 192.168.1.100:/home/debian /mnt/bbb
+mount beaglebone.local:/home/debian /mnt/bbb
 ```
 
 If you're on Windows, unfortunately microsoft has removed NFS functionality from some versions of Windows. You can still
