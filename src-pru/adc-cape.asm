@@ -38,6 +38,10 @@
   .asg 4, CHANNELS
   .asg 4, SAMPLE_SIZE_BYTES
   .asg 2048, BUFFER_SIZE_BYTES
+
+  .asg 30, NONTRANSFER_SCLK_CYCLES
+  .asg NONTRANSFER_SCLK_CYCLES - 2, WAIT_SCLK_CYCLES
+  .asg 27, FREQUENCY_TRIM ; Number of 5ns periods that should be skipped to get the correct overall frequency
   
   .asg 0x00000000, BUFF_LOCATION ; Hooked up to main memory
   .asg 0x00010000, BUFF_NUMBER_LOCATION ; Hooked up to main memory
@@ -137,34 +141,33 @@ MAINLOOP_FSYNC:
    read_channel_fsync r21
    read_channel_fsync r22
    read_channel_fsync r23
-   NOP
-   NOP
-   NOP
-   NOP
-   SET r30, r30, SCLK_BIT
 
    ; There's alot of delay between samples (~6us), so this sassembly code won't be written efficiently
-
    AND BUFFER_OFFSET, BUFFER_NUMBER, 1 ; Get the parity
    LSL BUFFER_OFFSET, BUFFER_OFFSET, 12 ; Make it 0 or 4096
    ADD BUFFER_OFFSET, BUFFER_OFFSET, SAMPLE_OFFEST
+   NOP
+   SET r30, r30, SCLK_BIT
 
-   SBBO &r20, BUFFER_OFFSET, 0,      SAMPLE_SIZE_BYTES
-   CLR r30, r30, SCLK_BIT
    SBBO &r21, BUFFER_OFFSET, C_1024, SAMPLE_SIZE_BYTES
+   SBBO &r20, BUFFER_OFFSET, 0,      SAMPLE_SIZE_BYTES
+   NOP
+   CLR r30, r30, SCLK_BIT
+   SBBO &r23, BUFFER_OFFSET, C_3072, SAMPLE_SIZE_BYTES
    SBBO &r22, BUFFER_OFFSET, C_2048, SAMPLE_SIZE_BYTES
    SET r30, r30, SCLK_BIT
-   SBBO &r23, BUFFER_OFFSET, C_3072, SAMPLE_SIZE_BYTES
 
    LDI32 r20, 0 ; Clear the input buffer. Not necessary once everything is 24 bits
    LDI32 r21, 0
-   CLR r30, r30, SCLK_BIT ; Start of 98th SCLK cycle
    LDI32 r22, 0
+   NOP
+   CLR r30, r30, SCLK_BIT ; Start of 98th SCLK cycle
    LDI32 r23, 0
 
    ADD SAMPLE_OFFEST, SAMPLE_OFFEST, SAMPLE_SIZE_BYTES
 
    ; Did we fill either buffer?
+   NOP
    QBNE WAIT, SAMPLE_OFFEST, C_1024
 
    ; Communicate the buffer to the host
@@ -175,7 +178,7 @@ MAINLOOP_FSYNC:
    LDI32 SAMPLE_OFFEST, 0
    NOP
 
-   LDI32 r7, 26
+   LDI32 r7, WAIT_SCLK_CYCLES
 WAIT_LOOP:
    CLR r30, r30, SCLK_BIT
    SUB r7, r7, 1
@@ -186,7 +189,8 @@ WAIT_LOOP:
    NOP
    NOP
    NOP
-   NOP
+   ; Skip one instruction cycle to trim the overall frequency.
+   ; Should be exctly 6.945ns overall. Target frequency is 6.9444444ns
    QBNE WAIT_LOOP, r7, 0
    CLR r30, r30, SCLK_BIT
    NOP
@@ -205,7 +209,8 @@ WAIT:
    NOP
    NOP
    NOP
-   LDI32 r7, 26
+   ; NOP Skip this instruction to nudge the overall frequency
+   LDI32 r7, WAIT_SCLK_CYCLES
    QBA WAIT_LOOP
 
 
