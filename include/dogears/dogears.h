@@ -159,11 +159,15 @@ template<typename format>
 Buffer<format> DogEars::capture(unsigned int samples) {
     auto data = std::make_shared<std::vector<std::vector<typename format::backing_type>>>(
             channels,
-            std::vector<typename format::backing_type>(pru_buffer_capacity_samples));
+            std::vector<typename format::backing_type>(samples));
     unsigned int samples_captured = 0;
     int last_buffer_number = -1;
 
     volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
+    
+    // Make this thread realtime
+    struct sched_param param = { 2 };
+    pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
 
     while (samples_captured < samples) {
         prussdrv_pru_wait_event(PRU_EVTOUT_0);
@@ -172,7 +176,6 @@ Buffer<format> DogEars::capture(unsigned int samples) {
         int read_size = std::min(pru_buffer_capacity_samples, samples - samples_captured);
         readInto<format>(*data, buffer_number, samples_captured, read_size);
         prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
-        std::cout<<"Got buffer " << buffer_number << std::endl;
 
         // Get ready for next time
 #ifdef DEBUG
