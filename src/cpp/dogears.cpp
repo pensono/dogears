@@ -3,6 +3,9 @@
 #include <iostream>
 #include <stdexcept>
 #include <fcntl.h>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <prussdrv.h>
@@ -57,7 +60,7 @@ DogEars::DogEars() : gains(channels, dB_0) {
         throw std::runtime_error("Failed to map base address");
     }
 
-    // Set up interrupts
+    // Set up PRU interrupts
     tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
 
     if (prussdrv_init()) {
@@ -106,4 +109,5 @@ void DogEars::writeGain(unsigned int channel, Gain gain) {
     writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2] + "/value", values[gain & 1]);
     writeFile("/sys/class/gpio/gpio" + gain_pins[channel * 2 + 1] + "/value", values[(gain & 2) >> 1]);
 }
+
 }

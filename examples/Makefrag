@@ -6,7 +6,7 @@ EXAMPLES:=average capture_wav
 examples: $(EXAMPLES)
 
 .SECONDEXPANSION:
-$(EXAMPLES): $(GEN_DIR)/examples/$$@.o $(GEN_DIR)/libdogears.a
+$(EXAMPLES): $(GEN_DIR)/libdogears.a $(GEN_DIR)/examples/$$@.o
 	@echo 'LD	$@ <= $^'
 	@$(CC) $(LFLAGS) -o $@ $^  -Lbin -ldogears
 

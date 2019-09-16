@@ -1,6 +1,10 @@
 #pragma once
 #include <functional>
 #include <algorithm>
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
 #include "dogears/buffer.h"
@@ -31,10 +35,17 @@ class DogEars {
     virtual ~DogEars();
     
     /**
-      Begins asynchronously streaming data to a callback
+      Begins asynchronously streaming data to a callback. Only one stream is
+      supported at a time.
      */
     template<typename format>
     void beginStream(std::function<void(Buffer<format>)> callback);
+
+    /**
+      Ends asynchronously streaming data to a callback.
+     */
+    template<typename format>
+    void endStream();
     
     /**
       Synchronously captures data for the given number of samples.
@@ -94,22 +105,35 @@ class DogEars {
     std::vector<Gain> gains;
 };
 
+// Not to be called by users
+template <typename format>
+void dispatchBuffers(std::function<void(Buffer<format>)> callback, std::shared_ptr<std::queue<Buffer<format>>> queue, std::shared_ptr<std::mutex> queue_mutex, std::shared_ptr<std::condition_variable> ready_signal);
+
 template<typename format>
 void DogEars::beginStream(std::function<void(Buffer<format>)> callback) {
-    volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
+    auto processing_queue = std::make_shared<std::queue<Buffer<format>>>();
+    auto queue_mutex = std::make_shared<std::mutex>();
+    auto ready_signal = std::make_shared<std::condition_variable>();
+    std::thread processing_thread(dispatchBuffers<format>, callback, processing_queue, queue_mutex, ready_signal);
+
     int last_buffer_number = -1;
 
     while (true) {
-        std::vector<std::vector<typename format::backing_type>>
-                data(channels, std::vector<typename format::backing_type>(pru_buffer_capacity));
+        // Heap allocate the data
+        auto data = std::make_shared<std::vector<std::vector<typename format::backing_type>>>(
+                channels,
+                std::vector<typename format::backing_type>(pru_buffer_capacity));
 
         int buffer_number = prussdrv_pru_wait_event(PRU_EVTOUT_0);
 
-        readInto<format>(data, buffer_number, 0, pru_buffer_capacity);
+        readInto<format>(*data, buffer_number, 0, pru_buffer_capacity);
         prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 
-        Buffer<format> buffer { data };
-        callback(buffer);
+        {
+            std::lock_guard<std::mutex> lock(*queue_mutex);
+            processing_queue->emplace(std::move(data));
+            ready_signal->notify_one();
+        }
 
         // Get ready for next time
 #ifdef DEBUG
@@ -166,6 +190,27 @@ void DogEars::readInto(
         for (unsigned int j = 0; j < samples; j++) {
             // Convert from 24bit signed
             data[i][startSample+j] = format::convert(buffer_start[j + pru_buffer_capacity * i]);
+        }
+    }
+}
+
+template <typename format>
+void dispatchBuffers(std::function<void(Buffer<format>)> callback, std::shared_ptr<std::queue<Buffer<format>>> queue, std::shared_ptr<std::mutex> queue_mutex, std::shared_ptr<std::condition_variable> ready_signal) {
+    // Thread destroyed by destructor
+    std::queue<Buffer<format>> callback_queue;
+    while (true) {
+        {
+            std::unique_lock<std::mutex> lock(*queue_mutex);
+            ready_signal->wait(lock);
+
+            // We've got the queue. Take all items off and send them to the user
+            queue->swap(callback_queue);
+        }
+
+        // Dispatch
+        while (!callback_queue.empty()) {
+            callback(callback_queue.front());
+            callback_queue.pop();
         }
     }
 }
