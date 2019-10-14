@@ -46,7 +46,7 @@
   .asg 0x00010000, BUFF_NUMBER_LOCATION ; Hooked up to main memory
 
 
-read_channel .macro out_reg
+read_channel_spi .macro out_reg
    LOOP READ_CHANNEL_END?, BITS_PER_CHANNEL
    LSL out_reg, out_reg, 1 ; Shift
    NOP
@@ -118,7 +118,7 @@ START:
    NOP
    SET r30, r30, SYNC_BIT
 
-   QBA MAINLOOP_FSYNC
+   QBA MAINLOOP_SPI
 
 TEST_LOOP:
    XOR r30, r30, 1 << DBUG_BIT ; Debug pulse
@@ -217,10 +217,10 @@ MAINLOOP_SPI:
    WBC r31, DRDY_BIT ; Wait for /DRDY
 
    ; The ADC will always send out all four channels based on the board configuration
-   read_channel r20
-   read_channel r21
-   read_channel r22
-   read_channel r23
+   read_channel_spi r20
+   read_channel_spi r21
+   read_channel_spi r22
+   read_channel_spi r23
    XOR r30, r30, 1 << DBUG_BIT ; Debug pulse
 
    ; There's alot of delay between samples (~6us), so this sassembly code won't be written efficiently
