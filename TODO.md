@@ -1,0 +1,1 @@
+- Make the buffer use a contiguous memory layout
