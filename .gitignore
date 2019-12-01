@@ -1,6 +1,12 @@
-# executables
+# example binaries
 memory_test
-moving_average
+average
+
+# Wav files from capture_wav
+*.wav
+
+# Developer specific settings
+.vscode/
 
 # output directory
 bin/
