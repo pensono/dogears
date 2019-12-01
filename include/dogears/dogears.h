@@ -1,10 +1,12 @@
 #pragma once
-#include <functional>
+
 #include <algorithm>
+#include <condition_variable>
+#include <functional>
+#include <iostream>
+#include <mutex>
 #include <queue>
 #include <thread>
-#include <mutex>
-#include <condition_variable>
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
 #include <pthread.h>

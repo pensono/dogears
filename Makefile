@@ -1,3 +1,4 @@
+CC:=g++
 # --std=c++17 -lstdc++fs needed for <filesystem>
 CFLAGS:=-c -Wall -O3 -Iinclude -DDEBUG -g --std=c++17 -lstdc++fs -I/home/debian/am335x_pru_package/pru_sw/app_loader/include -lprussdrv -pthread
 LFLAGS:=-lprussdrv -pthread --std=c++17
@@ -8,6 +9,7 @@ all: pru-run test_rpmsg
 
 include src/cpp/Makefrag
 include src/pru/Makefrag
+include src/python/Makefrag
 include examples/Makefrag
 include test/Makefrag
 

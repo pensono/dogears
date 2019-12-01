@@ -1,0 +1,15 @@
+
+SRCS=$(wildcard src/python/*.cpp)
+OBJS=$(SRCS:src/python/%.cpp=$(GEN_DIR)/python/%.o)
+
+pythonlib: $(GEN_DIR)/pydogears.so
+	@echo 'pythonlib built'
+
+$(GEN_DIR)/pydogears.so: $(OBJS) $(GEN_DIR)/libdogears.a
+	@echo 'G++	$@ <= $^'
+	@$(CC) -shared $^ $(GEN_DIR)/libdogears.a -o $@ $(LFLAGS)
+
+$(GEN_DIR)/python/%.o: src/python/%.cpp
+	@mkdir -p $(GEN_DIR)/python
+	@echo 'G++	$@ <= $^'
+	@$(CC) $(CFLAGS) $< -o $@
