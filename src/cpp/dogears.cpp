@@ -87,6 +87,14 @@ DogEars::~DogEars() {
     munmap((void *) buffer_number_base, 4);
     munmap((void *) buffer_base, map_size);
     close(memory_fd);
+
+    // This is a no-op if the stream has already ended
+    endStream();
+}
+
+void DogEars::endStream() {
+    continueStreaming = false;
+    streamThread.join();
 }
 
 void DogEars::setGain(unsigned int channel, Gain gain) {

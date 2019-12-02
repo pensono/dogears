@@ -2,6 +2,7 @@
 #include <numeric>
 #include <vector>
 #include <iomanip>      // std::setprecision
+#include <unistd.h>
 #include "dogears/dogears.h"
 #include "dogears/buffer.h"
 
@@ -18,7 +19,11 @@ int main(int argc, char* argv[]) {
     cape.beginStream<dogears::Normalized>(averageAndPrint);
     
     // Streaming happens asynchronously
-    system("pause");
+    std::cout << "Press Ctrl-C to exit" << std::endl;
+    pause();
+
+    cape.endStream();
+    
     exit(0);
 }
 

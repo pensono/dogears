@@ -8,7 +8,7 @@ examples: $(EXAMPLES)
 .SECONDEXPANSION:
 $(EXAMPLES): $(GEN_DIR)/libdogears.a $(GEN_DIR)/examples/$$@.o
 	@echo 'LD	$@ <= $^'
-	@$(CC) $(LFLAGS) -o $@ $^  -Lbin -ldogears
+	@$(CC) $(LFLAGS) -o $@ $^ -Lbin -ldogears
 
 $(GEN_DIR)/examples/%.o: examples/%.cpp $(wildcard include/dogears/*.h)
 	@mkdir -p $(GEN_DIR)/examples

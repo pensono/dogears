@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <condition_variable>
+#include <chrono>
 #include <functional>
 #include <iostream>
 #include <mutex>
@@ -49,7 +50,6 @@ class DogEars {
     /**
       Ends asynchronously streaming data to a callback.
      */
-    template<typename format>
     void endStream();
     
     /**
@@ -108,53 +108,70 @@ class DogEars {
     volatile void* buffer_number_base;
 
     std::vector<Gain> gains;
+
+    std::thread streamThread;
+    volatile bool continueStreaming;
 };
 
 // Not to be called by users
 template <typename format>
-void dispatchBuffers(std::function<void(Buffer<format>)> callback, std::shared_ptr<std::queue<Buffer<format>>> queue, std::shared_ptr<std::mutex> queue_mutex, std::shared_ptr<std::condition_variable> ready_signal);
+void dispatchBuffers(
+    std::function<void(Buffer<format>)> callback, 
+    std::shared_ptr<std::queue<Buffer<format>>> queue,    
+    std::shared_ptr<std::mutex> queue_mutex,
+    std::shared_ptr<std::condition_variable> ready_signal, 
+    volatile bool* continueStreaming);
 
 template<typename format>
 void DogEars::beginStream(std::function<void(Buffer<format>)> callback) {
-    auto processing_queue = std::make_shared<std::queue<Buffer<format>>>();
-    auto queue_mutex = std::make_shared<std::mutex>();
-    auto ready_signal = std::make_shared<std::condition_variable>();
-    std::thread processing_thread(dispatchBuffers<format>, callback, processing_queue, queue_mutex, ready_signal);
+    continueStreaming = true;
+    streamThread = std::thread([&] () {
+        auto processing_queue = std::make_shared<std::queue<Buffer<format>>>();
+        auto queue_mutex = std::make_shared<std::mutex>();
+        auto ready_signal = std::make_shared<std::condition_variable>();
+        std::thread processing_thread(dispatchBuffers<format>, callback, processing_queue, queue_mutex, ready_signal, &continueStreaming);
 
-    // Make this thread realtime
-    struct sched_param param = { 2 };
-    pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+        // Make this thread realtime
+        struct sched_param param = { 2 };
+        pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
 
-    int last_buffer_number = -1;
+        int last_buffer_number = -1;
 
-    volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
+        volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
 
-    while (true) {
-        // Heap allocate the data
-        auto data = std::make_shared<std::vector<std::vector<typename format::backing_type>>>(
-                channels,
-                std::vector<typename format::backing_type>(pru_buffer_capacity_samples));
+        while (continueStreaming) {
+            // Heap allocate the data
+            auto data = std::make_shared<std::vector<std::vector<typename format::backing_type>>>(
+                    channels,
+                    std::vector<typename format::backing_type>(pru_buffer_capacity_samples));
 
-        prussdrv_pru_wait_event(PRU_EVTOUT_0);
-        int buffer_number = *buffer_number_pru;
+            // We expect a new buffer every 3ms, so we'll wait  for at most 10ms before checking the continueStreaming variable again
+            if (prussdrv_pru_wait_event_timeout(PRU_EVTOUT_0, 10 * 1000) == 0) {
+                continue;
+            }
 
-        readInto<format>(*data, buffer_number, 0, pru_buffer_capacity_samples);
-        prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+            int buffer_number = *buffer_number_pru;
 
-        {
-            std::lock_guard<std::mutex> lock(*queue_mutex);
-            processing_queue->emplace(std::move(data));
-            ready_signal->notify_one();
+            readInto<format>(*data, buffer_number, 0, pru_buffer_capacity_samples);
+            prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+
+            {
+                std::lock_guard<std::mutex> lock(*queue_mutex);
+                processing_queue->emplace(std::move(data));
+                ready_signal->notify_one();
+            }
+
+            // Get ready for next time
+    #ifdef DEBUG
+            if (buffer_number - last_buffer_number > 1 && last_buffer_number != -1) {
+                std::cout << "Buffer dropped. Dropped buffers: " << buffer_number - last_buffer_number - 1 << std::endl;
+            }
+    #endif
+            last_buffer_number = buffer_number;
         }
 
-        // Get ready for next time
-#ifdef DEBUG
-        if (buffer_number - last_buffer_number > 1 && last_buffer_number != -1) {
-            std::cout << "Buffer dropped. Dropped buffers: " << buffer_number - last_buffer_number - 1 << std::endl;
-        }
-#endif
-        last_buffer_number = buffer_number;
-    }
+        processing_thread.join();
+    });
 }
 
 template<typename format>
@@ -212,13 +229,20 @@ void DogEars::readInto(
 }
 
 template <typename format>
-void dispatchBuffers(std::function<void(Buffer<format>)> callback, std::shared_ptr<std::queue<Buffer<format>>> queue, std::shared_ptr<std::mutex> queue_mutex, std::shared_ptr<std::condition_variable> ready_signal) {
-    // Thread destroyed by destructor
+void dispatchBuffers(
+        std::function<void(Buffer<format>)> callback,
+        std::shared_ptr<std::queue<Buffer<format>>> queue,
+        std::shared_ptr<std::mutex> queue_mutex,
+        std::shared_ptr<std::condition_variable> ready_signal,
+        volatile bool* continueStreaming) {
     std::queue<Buffer<format>> callback_queue;
-    while (true) {
+    while (*continueStreaming) {
         {
             std::unique_lock<std::mutex> lock(*queue_mutex);
-            ready_signal->wait(lock);
+            if (ready_signal->wait_for(lock, std::chrono::milliseconds(10)) == std::cv_status::timeout) {
+                // Timed out. check that we're still streaming and try again
+                continue;
+            }
 
             // We've got the queue. Take all items off and send them to the user
             queue->swap(callback_queue);
