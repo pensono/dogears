@@ -30,7 +30,7 @@ void dogears_capture(DogEars* dogears, float* buffer, uint32_t samples_per_chann
     }
 }
 
-void dogears_beginStream(DogEars* dogears, void (*callback)(float*)) {
+void dogears_stream(DogEars* dogears, void (*callback)(float*)) {
     auto wrappedCallback = [&](Buffer<Normalized> buffer) {
         float pythonBuffer[buffer.channels() * buffer.samples()];
         for (unsigned int i = 0; i < buffer.channels(); i++) {
@@ -39,8 +39,7 @@ void dogears_beginStream(DogEars* dogears, void (*callback)(float*)) {
         callback(pythonBuffer);
     };
 
-    std::cout << "Starting stream..." << std::endl;
-    dogears->beginStream<Normalized>(wrappedCallback);
+    dogears->stream<Normalized>(wrappedCallback);
 }
 
 }

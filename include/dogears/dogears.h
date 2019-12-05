@@ -51,6 +51,13 @@ class DogEars {
       Ends asynchronously streaming data to a callback.
      */
     void endStream();
+
+    /**
+      Begins synchronously streaming data to a callback. This function does
+      not return.
+     */
+    template<typename format>
+    void stream(std::function<void(Buffer<format>)> callback);
     
     /**
       Synchronously captures data for the given number of samples.
@@ -113,6 +120,9 @@ class DogEars {
     volatile bool continueStreaming;
 };
 
+// TODO remove duplicated logic between capture/beginStream/stream
+// TODO make the templates compile faster by calling into precompiled versions
+
 // Not to be called by users
 template <typename format>
 void dispatchBuffers(
@@ -172,6 +182,54 @@ void DogEars::beginStream(std::function<void(Buffer<format>)> callback) {
 
         processing_thread.join();
     });
+}
+
+template<typename format>
+void DogEars::stream(std::function<void(Buffer<format>)> callback) {
+    auto processing_queue = std::make_shared<std::queue<Buffer<format>>>();
+    auto queue_mutex = std::make_shared<std::mutex>();
+    auto ready_signal = std::make_shared<std::condition_variable>();
+    
+    streamThread = std::thread([&] () {
+        // Make this thread realtime
+        struct sched_param param = { 2 };
+        pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+
+        int last_buffer_number = -1;
+
+        volatile uint32_t* buffer_number_pru = (uint32_t*)buffer_number_base;
+
+        while (continueStreaming) {
+            // Heap allocate the data
+            auto data = std::make_shared<std::vector<std::vector<typename format::backing_type>>>(
+                    channels,
+                    std::vector<typename format::backing_type>(pru_buffer_capacity_samples));
+
+            // We expect a new buffer every 3ms, so we'll wait  for at most 10ms before checking the continueStreaming variable again
+            prussdrv_pru_wait_event(PRU_EVTOUT_0);
+
+            int buffer_number = *buffer_number_pru;
+
+            readInto<format>(*data, buffer_number, 0, pru_buffer_capacity_samples);
+            prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
+
+            {
+                std::lock_guard<std::mutex> lock(*queue_mutex);
+                processing_queue->emplace(std::move(data));
+                ready_signal->notify_one();
+            }
+
+            // Get ready for next time
+    #ifdef DEBUG
+            if (buffer_number - last_buffer_number > 1 && last_buffer_number != -1) {
+                std::cout << "Buffer dropped. Dropped buffers: " << buffer_number - last_buffer_number - 1 << std::endl;
+            }
+    #endif
+            last_buffer_number = buffer_number;
+        }
+    });
+
+    dispatchBuffers(callback, processing_queue, queue_mutex, ready_signal, &continueStreaming);
 }
 
 template<typename format>

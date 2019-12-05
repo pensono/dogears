@@ -1,6 +1,6 @@
 from ctypes import *
 import numpy as np
-from numpy.ctypeslib import ndpointer
+from numpy.ctypeslib import ndpointer, as_array
 
 __all__ = ['DogEars']
 
@@ -20,26 +20,43 @@ class DogEars(c_void_p):
         return buffer
 
     def beginStream(self, callback):
-        @CFUNCTYPE(None, streaming_buffer)
-        def wrappedCallback(data):
+        buffer = np.empty([4, buffer_size], dtype=np.float32)
+
+        # It would be nice to use an ndpointer type here, but the data
+        # wasn't being converted into a usable numpy array
+        @CFUNCTYPE(None, POINTER(c_float))
+        def wrappedCallback(data_pointer):
+            data = as_array(data_pointer, (4, 512))
             callback(data)
 
-        dogearsso.dogears_beginStream(self, wrappedCallback)
+        dogearsso.dogears_stream(self, wrappedCallback)
         return buffer
 
+
 dogearsso = CDLL("bin/pydogears.so")
+buffer_size = 512 # c_int32.in_dll(dogearsso, 'pru_buffer_capacity_samples')
+
 buffer = ndpointer(dtype=np.float32,ndim=2,flags="C_CONTIGUOUS")
-streaming_buffer = ndpointer(dtype=np.float32,shape=(4, 512),flags="C_CONTIGUOUS")
+
 dogearsso.dogears_init.restype = DogEars
 dogearsso.dogears_capture.argtypes = [DogEars, buffer, c_int32]
         
 with DogEars() as cape:
     #data = cape.capture(1024)
+    #print(data)
+
+    #print(type(streaming_buffer))
+    #print(streaming_buffer)
+
     def average(data):
         averages = np.average(data, axis=1)
-        #print(averages, end='\r')
+        print(averages, end='\r')
 
-    print("Beginning...")
+    print("Starting stream")
     cape.beginStream(average)
 
-    input("Press enter to stop")
+    #input("Ctrl-C to stop")
+    while True:
+        pass
+
+    print("done")
