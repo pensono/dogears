@@ -2,28 +2,16 @@
 #include <iostream>
 #include <limits>
 #include "dogears/format.h"
+#include "test_utilites.h"
 
 using namespace dogears;
-
-template<typename T>
-bool assert_eq(T observed, T expected, std::string errorMessage) {
-    bool value = observed == expected;
-
-    if (!value) {
-        std::cout << errorMessage << std::endl;
-        std::cout << "  Got: " << observed << std::endl;
-        std::cout << "  Expected: " << expected << std::endl;
-    }
-
-    return value;
-}
 
 template <typename format>
 int doTest(const std::string& name) {
     bool passed = true;
-    passed &= assert_eq(format::convert(Raw::min), format::min, "Incorrect min for " + name);
-    passed &= assert_eq(format::convert(Raw::zero), format::zero, "Incorrect zero for " + name);
-    passed &= assert_eq(format::convert(Raw::max), format::max, "Incorrect max for " + name);
+    passed &= assertEqual(format::convert(Raw::min), format::min, "Incorrect min for " + name);
+    passed &= assertEqual(format::convert(Raw::zero), format::zero, "Incorrect zero for " + name);
+    passed &= assertEqual(format::convert(Raw::max), format::max, "Incorrect max for " + name);
 
     return passed;
 }
@@ -40,9 +28,5 @@ int main(int argc, char* argv[]) {
     passed &= doTest<SignedInt>("signed int");
     passed &= doTest<UnsignedInt>("unsigned int");
 
-    if (passed) {
-        std::cout << "  [PASSED]" << std::endl;
-    } else {
-        std::cout << "[FAILED]" << std::endl;
-    }
+    printTestResults(passed);
 }

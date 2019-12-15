@@ -8,13 +8,13 @@ test: $(TESTS:%=run-%)
 
 run-%: $(GEN_DIR)/test/%
 	@echo "TEST	$(@:run-%=%)"
-	-@$(GEN_DIR)/test/$(@:run-%=%)
+	-@sudo $(GEN_DIR)/test/$(@:run-%=%)
 
-$(GEN_DIR)/test/%: $(GEN_DIR)/test/%.o $(GEN_DIR)/libdogears.a
+$(GEN_DIR)/test/%: $(GEN_DIR)/test/%.o $(GEN_DIR)/test/test_utilities.o $(GEN_DIR)/libdogears.a 
 	@echo 'LD	$@ $^'
-	@$(CC) $(LFLAGS) -o $@ $^  -Lbin -ldogears
+	@$(CC) $(LFLAGS) -o $@ $^ -Lbin -ldogears
 
-$(GEN_DIR)/test/%.o: test/%.cpp
+$(GEN_DIR)/test/%.o: test/%.cpp $(wildcard test/test_utilities.*)
 	@mkdir -p $(GEN_DIR)/test
 	@echo 'G++	$<'
-	@$(CC) $(CFLAGS) -o $@ $^
+	@$(CC) $(CFLAGS) -o $@ $<
