@@ -16,11 +16,13 @@ testpy-%: test/%.py bin/empty/pythonlib
 	@echo "TEST PY	$(@:testpy-%=%)"
 	-@sudo python3 test/$(@:testpy-%=%).py
 
+.PRECIOUS: $(GEN_DIR)/test/%
 $(GEN_DIR)/test/%: $(GEN_DIR)/test/%.o $(GEN_DIR)/test/test_utilities.o $(GEN_DIR)/libdogears.a 
 	@echo 'LD	$@ <= $^'
 	@$(CC) $(LFLAGS) -o $@ $^ -Lbin -ldogears
 
-$(GEN_DIR)/test/%.o: test/%.cpp $(wildcard test/test_utilities.*) $(wildcard include/*)
+.PRECIOUS: $(GEN_DIR)/test/%.o
+$(GEN_DIR)/test/%.o: test/%.cpp $(wildcard test/test_utilities.*) $(wildcard include/dogears/*.h)
 	@mkdir -p $(GEN_DIR)/test
 	@echo 'G++	$@ <= $^'
-	@$(CC) $(CFLAGS) -o $@ $<
+	@$(CC) $(CFLAGS) $< -o $@
