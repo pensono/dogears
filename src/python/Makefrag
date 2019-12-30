@@ -5,7 +5,7 @@ OBJS=$(SRCS:src/python/%.cpp=$(GEN_DIR)/python/%.o)
 # Can't install this as user because the tests must be run as root
 # When the library can be called from non-privilaged code, this 
 # should be run with the --user flag without sudo
-bin/empty/pythonlib: src/python/setup.py $(GEN_DIR)/pydogears.so src/python/Makefrag
+bin/empty/pythonlib: src/python/setup.py src/python/Makefrag
 	@echo 'PYTHON	$<'
 	@cd src/python; sudo python3 setup.py develop
 	@mkdir -p bin/empty

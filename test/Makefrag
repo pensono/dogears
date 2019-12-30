@@ -9,10 +9,10 @@ PY_TESTS:=$(PY_TEST_SOURCES:test/%.py=%)
 test: $(CPP_TESTS:%=testcpp-%) $(PY_TESTS:%=testpy-%)
 
 testcpp-%: $(GEN_DIR)/test/%
-	@echo "TST	CPP $(@:testcpp-%=%)"
+	@echo "TST CPP	$(@:testcpp-%=%)"
 	-@sudo $(GEN_DIR)/test/$(@:testcpp-%=%)
 
-testpy-%: test/%.py bin/empty/pythonlib
+testpy-%: test/%.py bin/empty/pythonlib $(GEN_DIR/pydogears.so)
 	@echo "TST PY	$(@:testpy-%=%)"
 	-@sudo python3 test/$(@:testpy-%=%).py
 
