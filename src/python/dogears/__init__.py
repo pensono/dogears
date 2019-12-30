@@ -1,4 +1,5 @@
 from ctypes import *
+import os
 import numpy as np
 from numpy.ctypeslib import ndpointer, as_array
 
@@ -33,6 +34,7 @@ class DogEars(c_void_p):
         return buffer
 
 
+native_location = os.path.join(os.path.dirname(__file__), "bin", "pydogears.so")
 dogearsso = CDLL("bin/pydogears.so")
 buffer_size = 512 # c_int32.in_dll(dogearsso, 'pru_buffer_capacity_samples')
 
@@ -41,22 +43,4 @@ buffer = ndpointer(dtype=np.float32,ndim=2,flags="C_CONTIGUOUS")
 dogearsso.dogears_init.restype = DogEars
 dogearsso.dogears_capture.argtypes = [DogEars, buffer, c_int32]
         
-with DogEars() as cape:
-    #data = cape.capture(1024)
-    #print(data)
 
-    #print(type(streaming_buffer))
-    #print(streaming_buffer)
-
-    def average(data):
-        averages = np.average(data, axis=1)
-        print(averages, end='\r')
-
-    print("Starting stream")
-    cape.beginStream(average)
-
-    #input("Ctrl-C to stop")
-    while True:
-        pass
-
-    print("done")

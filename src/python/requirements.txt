@@ -1,0 +1,2 @@
+numpy==1.12.1
+setuptools==42.0.2

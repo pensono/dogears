@@ -48,12 +48,20 @@ bool checkBuffer(const dogears::Buffer<format>& buffer, std::string errorMessage
 
         if (!within_range) {
             std::cout << RED << errorMessagePrefix << " Channel " << i << ": Buffer contains items which are not within the format's range" << RESET << std::endl;
+            
             std::cout << "Item values:" << std::endl;
-            for (auto sample : channel_data) {
-                if (sample < format::min || sample > format::max) {
-                    std::cout << "  " << sample << std::endl;
+            for (unsigned int i = 0; i < channel_data.size(); i++) {
+                if (channel_data[i] < format::min || channel_data[i] > format::max) {
+                    std::cout << "  " << channel_data[i] << " index " << i << std::endl;
                 }
             }
+
+            std::cout << "All values:" << std::endl;
+            for (auto sample : channel_data) {
+                std::cout << "  " << sample;
+            }
+            std::cout << std::endl;
+
             check_passed = false;
         }
     }

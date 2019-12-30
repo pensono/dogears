@@ -2,8 +2,17 @@
 SRCS=$(wildcard src/python/*.cpp)
 OBJS=$(SRCS:src/python/%.cpp=$(GEN_DIR)/python/%.o)
 
-pythonlib: $(GEN_DIR)/pydogears.so
-	@echo 'pythonlib built'
+# Can't install this as user because the tests must be run as root
+# When the library can be called from non-privilaged code, this 
+# should be run with the --user flag without sudo
+bin/empty/pythonlib: src/python/setup.py $(GEN_DIR)/pydogears.so src/python/Makefrag
+	@echo 'PYTHON	$<'
+	@cd src/python; sudo python3 setup.py develop
+	@mkdir -p bin/empty
+	@touch $@
+
+python-installDependencies:
+	sudo pip3 install -r src/python/requirements.txt
 
 $(GEN_DIR)/pydogears.so: $(OBJS) $(GEN_DIR)/libdogears.a
 	@echo 'G++	$@ <= $^'
@@ -13,3 +22,5 @@ $(GEN_DIR)/python/%.o: src/python/%.cpp
 	@mkdir -p $(GEN_DIR)/python
 	@echo 'G++	$@ <= $^'
 	@$(CC) $(CFLAGS) $< -o $@
+
+.PHONY: python-installDependencies

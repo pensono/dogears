@@ -1,14 +1,20 @@
 
 CC:=g++
 
-TEST_SOURCES:=$(wildcard test/*test.cpp)
-TESTS:=$(TEST_SOURCES:test/%.cpp=%)
+CPP_TEST_SOURCES:=$(wildcard test/*test.cpp)
+CPP_TESTS:=$(CPP_TEST_SOURCES:test/%.cpp=%)
+PY_TEST_SOURCES:=$(wildcard test/*test.py)
+PY_TESTS:=$(PY_TEST_SOURCES:test/%.py=%)
 
-test: $(TESTS:%=run-%)
+test: $(CPP_TESTS:%=runcpp-%) $(PY_TESTS:%=runpy-%)
 
-run-%: $(GEN_DIR)/test/%
-	@echo "TEST	$(@:run-%=%)"
-	-@sudo $(GEN_DIR)/test/$(@:run-%=%)
+runcpp-%: $(GEN_DIR)/test/%
+	@echo "TEST	CPP $(@:runcpp-%=%)"
+	-@sudo $(GEN_DIR)/test/$(@:runcpp-%=%)
+
+runpy-%: test/%.py bin/empty/pythonlib
+	@echo "TEST PY	$(@:runpy-%=%)"
+	-@sudo python3 test/$(@:runpy-%=%).py
 
 $(GEN_DIR)/test/%: $(GEN_DIR)/test/%.o $(GEN_DIR)/test/test_utilities.o $(GEN_DIR)/libdogears.a 
 	@echo 'LD	$@ $^'

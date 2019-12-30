@@ -1,6 +1,6 @@
 # example binaries
-memory_test
 average
+capture_wav
 
 # Wav files from capture_wav
 *.wav
@@ -10,6 +10,10 @@ average
 
 # output directory
 bin/
+
+# Python
+__pycache__
+*.egg-info
 
 # Created by https://www.gitignore.io/api/clion
 # Edit at https://www.gitignore.io/?templates=clion
