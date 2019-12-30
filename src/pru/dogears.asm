@@ -149,6 +149,10 @@ MAINLOOP_FSYNC:
    SBBO &r23, BUFFER_OFFSET, C_6144, SAMPLE_SIZE_BYTES
    SET r30, r30, SCLK_BIT
 
+   ; This should be moved to the top of the loop.
+   ; I'm not doing this now because this problem was identified while only SPI mode is supported
+   ;   and I don't want to have to go back and redo the sclk timings
+   ; If FSYNC becomes supported this should be fixed
    LDI32 r20, 0 ; Clear the input buffer. Not necessary once everything is 24 bits
    LDI32 r21, 0
    LDI32 r22, 0
@@ -203,6 +207,11 @@ WAIT:
 
 
 MAINLOOP_SPI:
+   LDI32 r20, 0 ; Clear the input buffer. Not necessary once everything is 24 bits
+   LDI32 r21, 0
+   LDI32 r22, 0
+   LDI32 r23, 0
+
    WBC r31, DRDY_BIT ; Wait for /DRDY
 
    ; The ADC will always send out all four channels based on the board configuration
@@ -222,11 +231,6 @@ MAINLOOP_SPI:
    SBBO &r21, BUFFER_OFFSET, C_2048, SAMPLE_SIZE_BYTES
    SBBO &r22, BUFFER_OFFSET, C_4096, SAMPLE_SIZE_BYTES
    SBBO &r23, BUFFER_OFFSET, C_6144, SAMPLE_SIZE_BYTES
-
-   LDI32 r20, 0 ; Clear the input buffer. Not necessary once everything is 24 bits
-   LDI32 r21, 0
-   LDI32 r22, 0
-   LDI32 r23, 0
 
    ADD SAMPLE_OFFEST, SAMPLE_OFFEST, SAMPLE_SIZE_BYTES
 

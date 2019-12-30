@@ -6,21 +6,21 @@ CPP_TESTS:=$(CPP_TEST_SOURCES:test/%.cpp=%)
 PY_TEST_SOURCES:=$(wildcard test/*test.py)
 PY_TESTS:=$(PY_TEST_SOURCES:test/%.py=%)
 
-test: $(CPP_TESTS:%=runcpp-%) $(PY_TESTS:%=runpy-%)
+test: $(CPP_TESTS:%=testcpp-%) $(PY_TESTS:%=testpy-%)
 
-runcpp-%: $(GEN_DIR)/test/%
-	@echo "TEST	CPP $(@:runcpp-%=%)"
-	-@sudo $(GEN_DIR)/test/$(@:runcpp-%=%)
+testcpp-%: $(GEN_DIR)/test/%
+	@echo "TEST	CPP $(@:testcpp-%=%)"
+	-@sudo $(GEN_DIR)/test/$(@:testcpp-%=%)
 
-runpy-%: test/%.py bin/empty/pythonlib
-	@echo "TEST PY	$(@:runpy-%=%)"
-	-@sudo python3 test/$(@:runpy-%=%).py
+testpy-%: test/%.py bin/empty/pythonlib
+	@echo "TEST PY	$(@:testpy-%=%)"
+	-@sudo python3 test/$(@:testpy-%=%).py
 
 $(GEN_DIR)/test/%: $(GEN_DIR)/test/%.o $(GEN_DIR)/test/test_utilities.o $(GEN_DIR)/libdogears.a 
-	@echo 'LD	$@ $^'
+	@echo 'LD	$@ <= $^'
 	@$(CC) $(LFLAGS) -o $@ $^ -Lbin -ldogears
 
-$(GEN_DIR)/test/%.o: test/%.cpp $(wildcard test/test_utilities.*)
+$(GEN_DIR)/test/%.o: test/%.cpp $(wildcard test/test_utilities.*) $(wildcard include/*)
 	@mkdir -p $(GEN_DIR)/test
-	@echo 'G++	$<'
+	@echo 'G++	$@ <= $^'
 	@$(CC) $(CFLAGS) -o $@ $<
