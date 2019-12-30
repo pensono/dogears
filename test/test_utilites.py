@@ -5,25 +5,28 @@ GREEN = "\033[32m"
 RESET = "\033[0m"
 
 def assertEqual(observed, expected, errorMessage):
-    failed = observed != expected
+    passed = observed == expected
     
-    if test:
+    if not passed:
         print(RED + errorMessage + RESET)
+        print("Observed: " + RED + str(observed) + RESET)
+        print("Expected: " + RED + str(expected) + RESET)
 
-    return failed
-    
+    return passed
+
 
 def checkBuffer(buffer, errorMessagePrefix):
     """
     Make sure the buffer is sane.
-      1. Not all entries are zero. There should be some noise
+      1. Not all entries are zero. There should be some noise 
       2. All entries are within the acceptable range (ex: -1 to 1)
     """
     passed = True
 
     for i in range(buffer.shape[0]):
+        channelBuffer = buffer[i]
         allZeroes = np.all(buffer[i] == 0)
-        outOfRange = np.where((buffer[i] > 1.) | (buffer[i] < -1.0))
+        outOfRange = channelBuffer[(channelBuffer > 1.) | (channelBuffer < -1.0)]
 
         if allZeroes:
             print(RED + errorMessagePrefix + "All entries in channel {0} are zero".format(i) + RESET)
@@ -36,7 +39,7 @@ def checkBuffer(buffer, errorMessagePrefix):
             print(outOfRange)
 
             print("All values:")
-            print(buffer[i].tolist())
+            print(channelBuffer.tolist())
 
             passed = False
 

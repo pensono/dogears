@@ -9,11 +9,11 @@ PY_TESTS:=$(PY_TEST_SOURCES:test/%.py=%)
 test: $(CPP_TESTS:%=testcpp-%) $(PY_TESTS:%=testpy-%)
 
 testcpp-%: $(GEN_DIR)/test/%
-	@echo "TEST	CPP $(@:testcpp-%=%)"
+	@echo "TST	CPP $(@:testcpp-%=%)"
 	-@sudo $(GEN_DIR)/test/$(@:testcpp-%=%)
 
 testpy-%: test/%.py bin/empty/pythonlib
-	@echo "TEST PY	$(@:testpy-%=%)"
+	@echo "TST PY	$(@:testpy-%=%)"
 	-@sudo python3 test/$(@:testpy-%=%).py
 
 .PRECIOUS: $(GEN_DIR)/test/%

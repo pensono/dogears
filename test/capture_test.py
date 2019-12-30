@@ -6,7 +6,9 @@ def captureTest(cape, bufferSize, errorMessagePrefix):
 
     passed = checkBuffer(data, errorMessagePrefix)
     passed &= assertEqual(data.shape[0], 4, "Incorrect number of channels")
-    passed &= assertEqual(data.shape[0], bufferSize, "Incorrect number of samples")
+    passed &= assertEqual(data.shape[1], bufferSize, "Incorrect number of samples")
+
+    return passed
 
 with DogEars() as cape:
     passed = True
