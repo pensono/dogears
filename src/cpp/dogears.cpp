@@ -94,7 +94,11 @@ DogEars::~DogEars() {
 
 void DogEars::endStream() {
     continueStreaming = false;
-    streamThread.join();
+    
+    // streamThread may not be started if a stream operation was never called
+    if (streamThread.joinable()) {
+        streamThread.join();
+    }
 }
 
 void DogEars::setGain(unsigned int channel, Gain gain) {
