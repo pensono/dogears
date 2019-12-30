@@ -8,10 +8,5 @@ def print_average(data):
 
 with DogEars() as cape:
     print("Starting stream")
-    cape.beginStream(print_average)
-
-    #input("Ctrl-C to stop")
-    while True:
-        pass
-
-    print("done")
+    print("Press Ctrl-\ to stop")
+    cape.stream(print_average)

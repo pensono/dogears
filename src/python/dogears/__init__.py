@@ -1,5 +1,5 @@
-from ctypes import *
 import os
+from ctypes import *
 import numpy as np
 from numpy.ctypeslib import ndpointer, as_array
 
@@ -20,7 +20,7 @@ class DogEars(c_void_p):
         dogearsso.dogears_capture(self, buffer, samples)
         return buffer
 
-    def beginStream(self, callback):
+    def stream(self, callback):
         buffer = np.empty([4, buffer_size], dtype=np.float32)
 
         # It would be nice to use an ndpointer type here, but the data
@@ -31,7 +31,6 @@ class DogEars(c_void_p):
             callback(data)
 
         dogearsso.dogears_stream(self, wrappedCallback)
-        return buffer
 
 
 native_location = os.path.join(os.path.dirname(__file__), "bin", "pydogears.so")
