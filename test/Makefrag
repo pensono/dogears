@@ -12,7 +12,7 @@ testcpp-%: $(GEN_DIR)/test/%
 	@echo "TST CPP	$(@:testcpp-%=%)"
 	-@sudo $(GEN_DIR)/test/$(@:testcpp-%=%)
 
-testpy-%: test/%.py bin/empty/pythonlib $(GEN_DIR/pydogears.so)
+testpy-%: test/%.py bin/empty/pythonlib $(GEN_DIR)/pydogears.so
 	@echo "TST PY	$(@:testpy-%=%)"
 	-@sudo python3 test/$(@:testpy-%=%).py
 

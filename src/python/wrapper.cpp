@@ -13,6 +13,10 @@
 extern "C" {
 namespace dogears {
 
+// Can't be const or else it won't be included in the final binary
+unsigned int py_buffer_size_samples = pru_buffer_capacity_samples * 16;
+float py_sample_rate = sample_rate;
+
 DogEars* dogears_init() {
     auto ptr = new DogEars;
     return ptr;
@@ -34,19 +38,18 @@ void dogears_stream(DogEars* dogears, void (*callback)(float*)) {
     // Calling into python code is expensive. To avoid this, we will group several buffers together and
     // call the callback once
     // 16 is an arbitrarily chosen value
-    unsigned int samples_per_python_buffer = pru_buffer_capacity_samples * 16;
-    float python_buffer[samples_per_python_buffer * channels];
+    float python_buffer[py_buffer_size_samples * channels];
     unsigned int sample_count = 0;
 
     auto wrappedCallback = [&](Buffer<Normalized> buffer) {
         for (unsigned int i = 0; i < buffer.channels(); i++) {
-            std::memcpy(&python_buffer[i * samples_per_python_buffer + sample_count], buffer.channel(i).data(), buffer.samples() * sizeof(float));
+            std::memcpy(&python_buffer[i * py_buffer_size_samples + sample_count], buffer.channel(i).data(), buffer.samples() * sizeof(float));
         }
 
         sample_count += buffer.samples();
 
         // Assume that the buffer's size is always evenly divisible by samples_per_python_buffer
-        if (sample_count == samples_per_python_buffer) {
+        if (sample_count == py_buffer_size_samples) {
             callback(python_buffer);
             sample_count = 0;
         }
