@@ -7,6 +7,7 @@ __all__ = ['DogEars']
 
 class DogEars(c_void_p):
     def __init__(self):
+        self.sample_rate = 105469 # c_int32.in_dll(dogearsso, 'sample_rate_spi')
         self.value = dogearsso.dogears_init().value
 
     def __enter__(self):
@@ -27,7 +28,7 @@ class DogEars(c_void_p):
         # wasn't being converted into a usable numpy array
         @CFUNCTYPE(None, POINTER(c_float))
         def wrappedCallback(data_pointer):
-            data = as_array(data_pointer, (4, 512))
+            data = as_array(data_pointer, (4, buffer_size))
             callback(data)
 
         dogearsso.dogears_stream(self, wrappedCallback)
@@ -35,7 +36,7 @@ class DogEars(c_void_p):
 
 native_location = os.path.join(os.path.dirname(__file__), "bin", "pydogears.so")
 dogearsso = CDLL("bin/pydogears.so")
-buffer_size = 512 # c_int32.in_dll(dogearsso, 'pru_buffer_capacity_samples')
+buffer_size = 512 * 16 # c_int32.in_dll(dogearsso, 'pru_buffer_capacity_samples') * 16
 
 buffer = ndpointer(dtype=np.float32,ndim=2,flags="C_CONTIGUOUS")
 
