@@ -18,5 +18,7 @@ with dogears.DogEars() as cape:
     np.set_printoptions(precision=4)
 
     print("Starting stream")
-    print("Press Ctrl-\ to stop")
-    cape.stream(lambda data: find_frequency(cape.sample_rate, data))
+    print("Press Enter to stop")
+    cape.beginStream(lambda data: find_frequency(cape.sample_rate, data))
+
+    input()

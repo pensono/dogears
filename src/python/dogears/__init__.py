@@ -1,4 +1,5 @@
 import os
+from threading import Thread
 from ctypes import *
 import numpy as np
 from numpy.ctypeslib import ndpointer, as_array
@@ -22,6 +23,14 @@ class DogEars(c_void_p):
         return buffer
 
     def stream(self, callback):
+        """
+        Synchronously stream data from the cape. This function does not return
+        unless end_stream is called.
+
+        The data presented in the callback is only valid during the lifetime 
+        of the call. If the data must be persisted beyond this duration, a copy
+        should be made.
+        """
         buffer = np.empty([4, buffer_size], dtype=np.float32)
 
         # It would be nice to use an ndpointer type here, but the data
@@ -32,6 +41,24 @@ class DogEars(c_void_p):
             callback(data)
 
         dogearsso.dogears_stream(self, wrappedCallback)
+        
+    def beginStream(self, callback):
+        """
+        Asynchronously stream data from the cape.
+
+        The data presented in the callback is only valid during the lifetime 
+        of the call. If the data must be persisted beyond this duration, a copy
+        should be made.
+        """
+        self.stream_thread = Thread(target = lambda: self.stream(callback))
+        self.stream_thread.start()
+
+    def endStream(self):
+        """
+        Stop asynchronously streaming data from the cape.
+        """
+        dogearsso.dogears_endStream(self)
+        self.stream_thread.join()
 
 
 native_location = os.path.join(os.path.dirname(__file__), "bin", "pydogears.so")

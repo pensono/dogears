@@ -49,6 +49,8 @@ class DogEars {
 
     /**
       Ends asynchronously streaming data to a callback.
+
+      This should not be called from the callback itself.
      */
     void endStream();
 

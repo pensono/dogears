@@ -55,7 +55,14 @@ void dogears_stream(DogEars* dogears, void (*callback)(float*)) {
         }
     };
 
+    // If the callback is called on a different thread than python is running, ctypes
+    // will create a new python thread for the callback. To avoid this, always
+    // use stream which performs the streaming and the callback on the current thread.
     dogears->stream<Normalized>(wrappedCallback);
+}
+
+void dogears_endStream(DogEars* dogears, float* buffer, uint32_t samples_per_channel) {
+    dogears->endStream();
 }
 
 }
