@@ -191,6 +191,7 @@ void DogEars::stream(std::function<void(Buffer<format>)> callback) {
     auto processing_queue = std::make_shared<std::queue<Buffer<format>>>();
     auto queue_mutex = std::make_shared<std::mutex>();
     auto ready_signal = std::make_shared<std::condition_variable>();
+    continueStreaming = true;
     
     streamThread = std::thread([&] () {
         // Make this thread realtime
@@ -208,8 +209,9 @@ void DogEars::stream(std::function<void(Buffer<format>)> callback) {
                     std::vector<typename format::backing_type>(pru_buffer_capacity_samples));
 
             // We expect a new buffer every 3ms, so we'll wait  for at most 10ms before checking the continueStreaming variable again
-            prussdrv_pru_wait_event(PRU_EVTOUT_0);
-
+            if (prussdrv_pru_wait_event_timeout(PRU_EVTOUT_0, 10 * 1000) == 0) {
+                continue;
+            }
             int buffer_number = *buffer_number_pru;
 
             readInto<format>(*data, buffer_number, 0, pru_buffer_capacity_samples);
@@ -249,7 +251,10 @@ Buffer<format> DogEars::capture(unsigned int samples) {
     pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
 
     while (samples_captured < samples) {
-        prussdrv_pru_wait_event(PRU_EVTOUT_0);
+        // We expect a new buffer every 3ms, so we'll wait  for at most 10ms before checking the continueStreaming variable again
+        if (prussdrv_pru_wait_event_timeout(PRU_EVTOUT_0, 10 * 1000) == 0) {
+            continue;
+        }
         int buffer_number = *buffer_number_pru;
 
         int read_size = std::min(pru_buffer_capacity_samples, samples - samples_captured);
