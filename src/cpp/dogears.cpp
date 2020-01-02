@@ -81,15 +81,15 @@ DogEars::DogEars() : gains(channels, dB_0) {
 }
 
 DogEars::~DogEars() {
-    prussdrv_pru_disable(PRU_NUM);
-    prussdrv_exit();
-
+    // This is a no-op if the stream has already ended
+    endStream();
+    
     munmap((void *) buffer_number_base, 4);
     munmap((void *) buffer_base, map_size);
     close(memory_fd);
 
-    // This is a no-op if the stream has already ended
-    endStream();
+    prussdrv_pru_disable(PRU_NUM);
+    prussdrv_exit();
 }
 
 void DogEars::endStream() {
