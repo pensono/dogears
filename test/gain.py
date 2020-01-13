@@ -10,10 +10,10 @@ def gainTest(cape, channel, errorMessagePrefix):
         setGain = cape.getGain(channel)
         passed &= assertEqual(setGain, gain, errorMessagePrefix + ": gain setting")
 
-        # Sample the noise and look for differences in it's amplitude.
+        # Sample the signal and look for differences in it's amplitude.
         # The 95th percentile is used as an estimate of the noise's amplitude
         data = cape.capture(2048)
-        amplitudes[i] = np.percentile(data[i,:], 70)
+        amplitudes[i] = np.percentile(data[i,:], 95)
 
     # Check sorted
     for i in range(len(amplitudes) - 1):

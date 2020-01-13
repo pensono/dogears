@@ -55,12 +55,12 @@ read_channel_spi .macro out_reg
    NOP
    NOP ; Bonus
    SET r30, r30, 0 ; Clock high
-   AND r7, r31, 1<<2 ; Read in/mask our bit to the right
-   LSR r7, r7, 2 ; Shift temp reg back
+   NOP
+   NOP
+   NOP
+   AND r7, r31, 1<<MISO_BIT ; Read in/mask our bit to the right
+   LSR r7, r7, MISO_BIT ; Shift temp reg back
    OR out_reg, out_reg, r7 ; Copy into buffer
-   NOP
-   NOP
-   NOP
    CLR r30, r30, 0 ; Clock low
    ; Must read one bit every 7 cycles
 READ_CHANNEL_END?:
