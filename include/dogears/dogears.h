@@ -193,7 +193,7 @@ void DogEars::stream(std::function<void(Buffer<format>)> callback) {
     auto ready_signal = std::make_shared<std::condition_variable>();
     continueStreaming = true;
     
-    streamThread = std::thread([&] () {
+    streamThread = std::thread([=] () {
         // Make this thread realtime
         struct sched_param param = { 2 };
         pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
@@ -216,13 +216,12 @@ void DogEars::stream(std::function<void(Buffer<format>)> callback) {
 
             readInto<format>(*data, buffer_number, 0, pru_buffer_capacity_samples);
             prussdrv_pru_clear_event(PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
-
             {
                 std::lock_guard<std::mutex> lock(*queue_mutex);
                 processing_queue->emplace(std::move(data));
                 ready_signal->notify_one();
             }
-
+            
             // Get ready for next time
     #ifdef DEBUG
             if (buffer_number - last_buffer_number > 1 && last_buffer_number != -1) {

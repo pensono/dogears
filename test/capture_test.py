@@ -10,9 +10,10 @@ def captureTest(cape, bufferSize, errorMessagePrefix):
 
     return passed
 
-with DogEars() as cape:
-    passed = True
 
+passed = True
+
+with DogEars() as cape:
     # Check around the boundaries of the internal buffer, which has the
     # size of some multiple of two
     passed &= captureTest(cape, 2048, "Several complete buffers: ")
@@ -20,4 +21,4 @@ with DogEars() as cape:
 
     passed &= captureTest(cape, 10, "One small buffer: ")
 
-    printTestResults(passed)
+printTestResults(passed)
