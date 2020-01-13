@@ -21,8 +21,8 @@ static constexpr int pru_shared_memory_start = 0x4a310000;
 
 // Each pair of elements are the pins for a single channel
 static const std::array<std::string, channels * 2> gain_pins = {
-  // ---CH0---  ---CH1----  -----CH2----  ---CH3----
-    "86", "87", "32", "36", "115", "117", "49", "48"
+  // ---CH0---  ---CH1----  ---CH2----  ----CH3-----
+    "86", "87", "32", "36", "49", "48", "115", "117"
 };
 
 // Map refers to both (all) buffers, since the data is double buffered

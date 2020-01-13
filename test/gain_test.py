@@ -13,7 +13,7 @@ def gainTest(cape, channel, errorMessagePrefix):
         # Sample the noise and look for differences in it's amplitude.
         # The 95th percentile is used as an estimate of the noise's amplitude
         data = cape.capture(2048)
-        amplitudes[i] = np.percentile(data[i,:], 95)
+        amplitudes[i] = np.percentile(data[i,:], 70)
 
     # Check sorted
     for i in range(len(amplitudes) - 1):
@@ -21,7 +21,7 @@ def gainTest(cape, channel, errorMessagePrefix):
 
     if not passed:
         print(RED + "Amplitudes:" + RESET)
-        print(RED + str(amplitudes) + RESET)
+    print(RED + str(amplitudes) + RESET)
 
     return passed
 
