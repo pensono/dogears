@@ -4,6 +4,12 @@ RED = "\033[31m"
 GREEN = "\033[32m"
 RESET = "\033[0m"
 
+def assertTrue(value, errorMessage):    
+    if not value:
+        print(RED + errorMessage + RESET)
+
+    return value
+
 def assertEqual(observed, expected, errorMessage):
     passed = observed == expected
     

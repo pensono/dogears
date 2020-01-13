@@ -109,6 +109,7 @@ void DogEars::setGain(unsigned int channel, Gain gain) {
     }
 
     writeGain(channel, gain);
+    gains[channel] = gain;
 }
 
 Gain DogEars::getGain(unsigned int channel) {

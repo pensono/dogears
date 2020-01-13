@@ -1,10 +1,18 @@
-import os
-from threading import Thread
 from ctypes import *
+from enum import Enum
 import numpy as np
 from numpy.ctypeslib import ndpointer, as_array
+import os
+from threading import Thread
 
-__all__ = ['DogEars']
+__all__ = ['DogEars', 'Gain']
+
+class Gain(Enum):
+    # These values must match what's defined in dogears.h
+    dB_0 = 0
+    dB_10 = 1
+    dB_20 = 2
+    dB_30 = 3
 
 class DogEars(c_void_p):
     def __init__(self):
@@ -59,6 +67,12 @@ class DogEars(c_void_p):
         """
         dogearsso.dogears_endStream(self)
         self.stream_thread.join()
+        
+    def setGain(self, channel, gain):
+        dogearsso.dogears_setGain(self, channel, gain.value)
+
+    def getGain(self, channel):
+        return Gain(dogearsso.dogears_getGain(self, channel))
 
 
 native_location = os.path.join(os.path.dirname(__file__), "bin", "pydogears.so")

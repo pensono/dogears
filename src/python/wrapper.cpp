@@ -65,5 +65,13 @@ void dogears_endStream(DogEars* dogears, float* buffer, uint32_t samples_per_cha
     dogears->endStream();
 }
 
+Gain dogears_getGain(DogEars* dogears, unsigned int channel) {
+    return dogears->getGain(channel);
+}
+
+void dogears_setGain(DogEars* dogears, unsigned int channel, Gain newGain) {
+    dogears->setGain(channel, newGain);
+}
+
 }
 }
