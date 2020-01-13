@@ -80,7 +80,15 @@ Enable UIO overlay in `/boot/uEnv.txt`
 ### Editors.
 I found the [Cloud9](http://beaglebone.local:3000/ide.html) editor to be somewhat clunky. There's no auto-save,
 and there's a bug where files in the editor may not be in sync with the files on disk. In addition, being web
-based, the performance of the editor itself is not great. 
+based, the performance of the editor itself is not great.
+
+The Remote - SSH extension in VS Code is by far the best development setup.
+
+#### Editing through VS Code
+
+The "Remote - SSH" extension to VS code lets you write code for the beaglebone as if it were your local machine. At the time of writing, it's only available in the [VS Code Insider's](https://code.visualstudio.com/insiders/). Once installed, get the "Remote - SSH" extension, and add `beaglebone.local` as a remote. The password for the default user is `temppwd`.
+
+#### Editing through a networked FS
 
 I was able to set up remote editing using JetBrains' CLion over an NFS share. On the beaglebone:
 ```

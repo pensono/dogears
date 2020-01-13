@@ -1,1 +1,3 @@
 - Make the buffer use a contiguous memory layout
+- Device tree support
+- Allow libraries to be run in userspace

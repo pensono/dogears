@@ -25,3 +25,5 @@ $(GEN_DIR)/python/%.o: src/python/%.cpp $(wildcard include/dogears/*.h)
 	@$(CC) $(CFLAGS) $< -o $@
 
 .PHONY: python-installDependencies
+
+pythonsetup: python-installDependencies $(GEN_DIR)/pydogears.so $(GEN_DIR)/empty/pythonlib
